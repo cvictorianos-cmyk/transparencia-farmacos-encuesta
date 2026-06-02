@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Encuesta · Transparencia de Precios de Fármacos Oncológicos</title>
+<style>
+  :root { --azul:#1F3A5F; --azul2:#2E5A88; --bg:#f4f6f9; --gris:#5b6470; --ok:#1b8a5a; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+         background:var(--bg); color:#1c2430; line-height:1.45; }
+  .wrap { max-width:640px; margin:0 auto; padding:0 16px 64px; }
+  header { background:var(--azul); color:#fff; padding:24px 16px; text-align:center; }
+  header h1 { margin:0 0 6px; font-size:1.15rem; }
+  header p { margin:0; font-size:.85rem; opacity:.9; }
+  .card { background:#fff; border-radius:14px; padding:18px 16px; margin-top:16px;
+          box-shadow:0 1px 3px rgba(0,0,0,.08); }
+  .card h2 { font-size:.95rem; color:var(--azul); margin:0 0 4px; }
+  .card .hint { font-size:.78rem; color:var(--gris); margin:0 0 14px; }
+  label { display:block; font-size:.85rem; font-weight:600; margin:12px 0 5px; }
+  .opt { font-weight:400; color:var(--gris); font-size:.78rem; }
+  input[type=text], input[type=number], input[type=email], select, textarea {
+    width:100%; padding:11px 12px; border:1px solid #cdd5df; border-radius:9px;
+    font-size:16px; background:#fff; }
+  textarea { min-height:70px; resize:vertical; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .chips input { display:none; }
+  .chips label { margin:0; padding:9px 14px; border:1px solid #cdd5df; border-radius:999px;
+                 font-weight:500; cursor:pointer; background:#fff; user-select:none; }
+  .chips input:checked + label { background:var(--azul); color:#fff; border-color:var(--azul); }
+  .scale { display:flex; gap:6px; }
+  .scale input { display:none; }
+  .scale label { flex:1; text-align:center; margin:0; padding:11px 0; border:1px solid #cdd5df;
+                 border-radius:9px; font-weight:600; cursor:pointer; }
+  .scale input:checked + label { background:var(--azul2); color:#fff; border-color:var(--azul2); }
+  .scale-ends { display:flex; justify-content:space-between; font-size:.72rem; color:var(--gris); margin-top:4px; }
+  .consent { display:flex; gap:10px; align-items:flex-start; margin-top:12px; font-size:.82rem; }
+  .consent input { margin-top:3px; }
+  button { width:100%; margin-top:22px; padding:15px; background:var(--azul); color:#fff;
+           border:0; border-radius:11px; font-size:1rem; font-weight:700; cursor:pointer; }
+  button:disabled { opacity:.6; }
+  .done { text-align:center; padding:48px 16px; }
+  .done .check { font-size:3rem; color:var(--ok); }
+  .done h2 { color:var(--azul); }
+  .err { color:#b00020; font-size:.85rem; margin-top:10px; text-align:center; }
+  footer { text-align:center; font-size:.72rem; color:var(--gris); margin-top:24px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Censo de Transparencia de Precios</h1>
+  <p>Fármacos oncológicos en Chile · Proyecto de Título MSIIN</p>
+</header>
+
+<div class="wrap">
+  <form id="f">
+    <!-- Bloque 1 -->
+    <div class="card">
+      <h2>1 · Sobre ti</h2>
+      <p class="hint">Tus respuestas son anónimas y se usan solo con fines académicos.</p>
+
+      <label>¿Quién responde?</label>
+      <div class="chips">
+        <input type="radio" id="r1" name="rol" value="paciente"><label for="r1">Paciente</label>
+        <input type="radio" id="r2" name="rol" value="cuidador"><label for="r2">Cuidador/a</label>
+        <input type="radio" id="r3" name="rol" value="profesional_salud"><label for="r3">Prof. salud</label>
+        <input type="radio" id="r4" name="rol" value="otro"><label for="r4">Otro</label>
+      </div>
+
+      <label>Rango de edad</label>
+      <select name="rango_edad">
+        <option value="">Selecciona…</option>
+        <option>18-29</option><option>30-44</option><option>45-59</option><option>60+</option>
+      </select>
+
+      <label>Región <span class="opt">(opcional)</span></label>
+      <input type="text" name="region" placeholder="Ej: Metropolitana">
+
+      <label>Comuna <span class="opt">(opcional)</span></label>
+      <input type="text" name="comuna" placeholder="Ej: Providencia">
+
+      <label>Previsión de salud</label>
+      <div class="chips">
+        <input type="radio" id="p1" name="prevision" value="fonasa"><label for="p1">Fonasa</label>
+        <input type="radio" id="p2" name="prevision" value="isapre"><label for="p2">Isapre</label>
+        <input type="radio" id="p3" name="prevision" value="particular"><label for="p3">Particular</label>
+        <input type="radio" id="p4" name="prevision" value="otro"><label for="p4">Otro</label>
+      </div>
+    </div>
+
+    <!-- Bloque 2 -->
+    <div class="card">
+      <h2>2 · Tu experiencia con precios</h2>
+      <p class="hint">Si no recuerdas un dato exacto, deja una estimación o déjalo en blanco.</p>
+
+      <label>Fármaco oncológico usado <span class="opt">(opcional)</span></label>
+      <input type="text" name="farmaco_oncologico" placeholder="Ej: Bevacizumab / Avastin">
+
+      <label>Precio aproximado pagado por dosis/ciclo (CLP) <span class="opt">(opcional)</span></label>
+      <input type="number" name="precio_pagado_clp" inputmode="numeric" placeholder="Ej: 1200000" min="0">
+
+      <label>¿Dónde lo compraste/recibiste?</label>
+      <div class="chips">
+        <input type="radio" id="l1" name="lugar_compra" value="clinica"><label for="l1">Clínica</label>
+        <input type="radio" id="l2" name="lugar_compra" value="farmacia"><label for="l2">Farmacia</label>
+        <input type="radio" id="l3" name="lugar_compra" value="hospital_publico"><label for="l3">Hosp. público</label>
+        <input type="radio" id="l4" name="lugar_compra" value="otro"><label for="l4">Otro</label>
+      </div>
+
+      <label>¿Comparaste precios antes de comprar?</label>
+      <div class="chips">
+        <input type="radio" id="c1" name="comparo_precios" value="si"><label for="c1">Sí</label>
+        <input type="radio" id="c2" name="comparo_precios" value="no"><label for="c2">No</label>
+        <input type="radio" id="c3" name="comparo_precios" value="no_pude"><label for="c3">Quise, no pude</label>
+      </div>
+    </div>
+
+    <!-- Bloque 3 -->
+    <div class="card">
+      <h2>3 · Dificultad y disposición</h2>
+
+      <label>¿Qué tan difícil fue encontrar precios?</label>
+      <div class="scale">
+        <input type="radio" id="d1" name="dificultad_encontrar_precios" value="1"><label for="d1">1</label>
+        <input type="radio" id="d2" name="dificultad_encontrar_precios" value="2"><label for="d2">2</label>
+        <input type="radio" id="d3" name="dificultad_encontrar_precios" value="3"><label for="d3">3</label>
+        <input type="radio" id="d4" name="dificultad_encontrar_precios" value="4"><label for="d4">4</label>
+        <input type="radio" id="d5" name="dificultad_encontrar_precios" value="5"><label for="d5">5</label>
+      </div>
+      <div class="scale-ends"><span>Muy fácil</span><span>Muy difícil</span></div>
+
+      <label>Gasto de bolsillo mensual en el tratamiento (CLP) <span class="opt">(opcional)</span></label>
+      <input type="number" name="gasto_bolsillo_mensual_clp" inputmode="numeric" placeholder="Ej: 800000" min="0">
+
+      <label>¿Usarías un comparador de precios como el de este proyecto?</label>
+      <div class="scale">
+        <input type="radio" id="u1" name="disposicion_usar_comparador" value="1"><label for="u1">1</label>
+        <input type="radio" id="u2" name="disposicion_usar_comparador" value="2"><label for="u2">2</label>
+        <input type="radio" id="u3" name="disposicion_usar_comparador" value="3"><label for="u3">3</label>
+        <input type="radio" id="u4" name="disposicion_usar_comparador" value="4"><label for="u4">4</label>
+        <input type="radio" id="u5" name="disposicion_usar_comparador" value="5"><label for="u5">5</label>
+      </div>
+      <div class="scale-ends"><span>No lo usaría</span><span>Sin duda sí</span></div>
+    </div>
+
+    <!-- Bloque 4 -->
+    <div class="card">
+      <h2>4 · Contacto <span class="opt" style="font-weight:400">(opcional)</span></h2>
+      <p class="hint">Solo si quieres que te contactemos para validar la solución.</p>
+
+      <label>Email <span class="opt">(opcional)</span></label>
+      <input type="email" name="email" placeholder="tucorreo@ejemplo.cl">
+
+      <label>Comentario libre <span class="opt">(opcional)</span></label>
+      <textarea name="comentario" placeholder="Cuéntanos tu experiencia…"></textarea>
+
+      <div class="consent">
+        <input type="checkbox" id="cons" name="consentimiento" value="true">
+        <label for="cons" style="margin:0;font-weight:400">Autorizo que mi email se use para contacto de validación de este proyecto académico.</label>
+      </div>
+    </div>
+
+    <button type="submit" id="btn">Enviar respuesta</button>
+    <div class="err" id="err" style="display:none"></div>
+  </form>
+
+  <div class="done" id="done" style="display:none">
+    <div class="check">✓</div>
+    <h2>¡Gracias por tu respuesta!</h2>
+    <p>Tu aporte ayuda a construir más transparencia en los precios de fármacos oncológicos en Chile.</p>
+  </div>
+
+  <footer>Proyecto de Título · Magíster en Sistemas de Información de Inteligencia de Negocios (MSIIN)</footer>
+</div>
+
+<script>
+const form = document.getElementById('f');
+const btn = document.getElementById('btn');
+const errBox = document.getElementById('err');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  btn.disabled = true; btn.textContent = 'Enviando…'; errBox.style.display='none';
+
+  const fd = new FormData(form);
+  const payload = {};
+  for (const [k, v] of fd.entries()) {
+    if (v === '') continue;
+    payload[k] = v;
+  }
+  payload.consentimiento = form.consentimiento.checked;
+  ['precio_pagado_clp','gasto_bolsillo_mensual_clp','dificultad_encontrar_precios','disposicion_usar_comparador']
+    .forEach(k => { if (payload[k] !== undefined) payload[k] = Number(payload[k]); });
+
+  try {
+    const res = await fetch('encuesta', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    form.style.display = 'none';
+    document.getElementById('done').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (ex) {
+    btn.disabled = false; btn.textContent = 'Enviar respuesta';
+    errBox.textContent = 'No se pudo enviar. Revisa tu conexión e inténtalo de nuevo.';
+    errBox.style.display = 'block';
+  }
+});
+</script>
+</body>
+</html>

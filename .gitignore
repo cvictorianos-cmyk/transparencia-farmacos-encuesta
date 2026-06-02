@@ -1,0 +1,18 @@
+# Entornos virtuales
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Base de datos local y exports (se regeneran)
+data/*.sqlite
+data/*.sqlite-journal
+exports/
+
+# Sistema
+.DS_Store
+Thumbs.db

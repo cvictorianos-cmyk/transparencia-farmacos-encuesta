@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generador de QR · Encuesta AFE</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  body { font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:#f4f6f9;
+         color:#1c2430; max-width:560px; margin:0 auto; padding:28px 18px; }
+  h1 { color:#1F3A5F; font-size:1.2rem; }
+  p { font-size:.9rem; color:#5b6470; }
+  label { display:block; font-weight:600; font-size:.85rem; margin:18px 0 6px; }
+  input { width:100%; padding:11px 12px; border:1px solid #cdd5df; border-radius:9px; font-size:15px; }
+  button { margin-top:14px; padding:12px 18px; background:#1F3A5F; color:#fff; border:0;
+           border-radius:9px; font-weight:700; font-size:.95rem; cursor:pointer; }
+  #qr { margin:24px auto; width:340px; height:340px; background:#fff; padding:18px;
+        border-radius:14px; box-shadow:0 1px 4px rgba(0,0,0,.1); display:flex;
+        align-items:center; justify-content:center; }
+  .url { font-size:.78rem; word-break:break-all; color:#1F3A5F; text-align:center; margin-top:8px; }
+</style>
+</head>
+<body>
+  <h1>Generador de QR — Encuesta del censo</h1>
+  <p>1. Despliega la API en Render y copia su URL pública.<br>
+     2. Pega la URL del formulario abajo (termina en <b>/encuesta</b>).<br>
+     3. Pulsa <b>Generar</b> y luego <b>Descargar PNG</b> para insertarlo en el AFE.</p>
+
+  <label for="url">URL pública del formulario</label>
+  <input id="url" type="text"
+         value="https://transparencia-farmacos-encuesta.onrender.com/encuesta">
+  <button onclick="generar()">Generar QR</button>
+  <button onclick="descargar()">Descargar PNG (1024px)</button>
+
+  <div id="qr"></div>
+  <div class="url" id="urlOut"></div>
+
+<script>
+let qrcode = null;
+function generar() {
+  const url = document.getElementById('url').value.trim();
+  document.getElementById('qr').innerHTML = '';
+  qrcode = new QRCode(document.getElementById('qr'), {
+    text: url, width: 304, height: 304,
+    colorDark: '#1F3A5F', colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H
+  });
+  document.getElementById('urlOut').textContent = url;
+}
+function descargar() {
+  const url = document.getElementById('url').value.trim();
+  // Render en alta resolucion (1024px) para impresion nitida en el documento.
+  const tmp = document.createElement('div');
+  const big = new QRCode(tmp, {
+    text: url, width: 1024, height: 1024,
+    colorDark: '#1F3A5F', colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H
+  });
+  setTimeout(() => {
+    const canvas = tmp.querySelector('canvas');
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = 'qr_encuesta_censo.png';
+    a.click();
+  }, 120);
+}
+generar();
+</script>
+</body>
+</html>

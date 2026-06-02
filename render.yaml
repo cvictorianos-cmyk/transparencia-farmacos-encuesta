@@ -1,0 +1,30 @@
+# Despliegue publico de la API en Render (https://render.com)
+# El QR del AFE apuntara a:  https://<nombre-del-servicio>.onrender.com/encuesta
+#
+# Pasos:
+#   1. Sube el repositorio a GitHub.
+#   2. En Render: New > Blueprint, selecciona el repo. Render lee este archivo.
+#   3. Si el repo contiene mas carpetas, fija "Root Directory" = api_benchmarking_oncologico
+#   4. Tras el primer deploy, copia la URL publica y genera el QR con tools/generar_qr.html
+#
+# Nota de persistencia: el plan free usa disco efimero (/tmp se borra al reiniciar).
+# Para NO perder respuestas del censo durante la recoleccion, descomenta el bloque "disk"
+# (requiere plan de pago) o conecta una base Postgres free y ajusta DB_DIR.
+
+services:
+  - type: web
+    name: transparencia-farmacos-encuesta
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DB_DIR
+        value: /tmp/benchmarking_oncologico_db
+    # --- Persistencia robusta (opcional, plan de pago) ---
+    # disk:
+    #   name: censo-data
+    #   mountPath: /data
+    #   sizeGB: 1
+    # Y cambia el envVar DB_DIR a value: /data
