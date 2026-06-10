@@ -7,8 +7,8 @@ la linea de tiempo de precios del comparador (version Premium).
 Fuentes (las mismas del catalogo):
     - Clinica INDISA ............... GraphQL publico ng-backend.indisa.cl
     - Clinica U. de los Andes ...... pagina de resultados (tabla HTML)
-    - Hospital Clinico UC CHRISTUS . API publica aranceles.ucchristus.cl (centroId=1)
-    - Clinica San Carlos Apoquindo . API publica aranceles.ucchristus.cl (centroId=3)
+    - UC Marcoleta (Hospital Clinico) . API publica aranceles.ucchristus.cl (centroId=1)
+    - UC San Carlos (Apoquindo) ...... API publica aranceles.ucchristus.cl (centroId=3)
     - Clinica Davila: su buscador es 100% JavaScript (sin endpoint HTTP simple),
       por lo que no se recolecta aqui; mantiene su ultimo precio conocido.
 
@@ -128,7 +128,7 @@ def recolectar_uandes(client: httpx.Client) -> list[dict]:
 
 def recolectar_uc(client: httpx.Client) -> list[dict]:
     filas = []
-    centros = {1: "Hospital Clinico UC CHRISTUS", 3: "Clinica San Carlos de Apoquindo"}
+    centros = {1: "UC Marcoleta", 3: "UC San Carlos"}
     for cid, cname in centros.items():
         for d in DROGAS:
             url = ("https://aranceles.ucchristus.cl/api/public/aranceles/v2"

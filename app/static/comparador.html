@@ -325,7 +325,7 @@
 
 <script>
 const fmt = n => "$" + (n ?? 0).toLocaleString("es-CL");
-const f2 = c => c.replace("Clinica ", "").replace("Hospital Clinico ", "").replace("Universidad de los Andes", "U. Andes").replace("San Carlos de Apoquindo", "San Carlos");
+const f2 = c => c.replace("Clinica ", "").replace("Universidad de los Andes", "U. Andes");
 let CASOS = [], PLAN = "free", PA_ACTUAL = null, PREMIUM_OK = false;
 const FREE_N = 3; // clinicas visibles en plan gratuito
 

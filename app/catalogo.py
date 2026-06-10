@@ -6,8 +6,8 @@ clinica (valor particular, horario habil), extraidos en junio de 2026:
     - Clinica INDISA ............... indisa.cl/aranceles-buscador (GraphQL)
     - Clinica Davila ............... davila.cl/aranceles (categoria Farmacos)
     - Clinica U. de los Andes ...... clinicauandes.cl/aranceles/resultado
-    - Hospital Clinico UC CHRISTUS . aranceles.ucchristus.cl/api/public (centroId=1)
-    - Clinica San Carlos Apoquindo . aranceles.ucchristus.cl/api/public (centroId=3)
+    - UC Marcoleta (Hospital Clinico UC) . aranceles.ucchristus.cl/api/public (centroId=1)
+    - UC San Carlos (Apoquindo) ......... aranceles.ucchristus.cl/api/public (centroId=3)
 
 Clinica Santa Maria y Clinica Alemana NO publican el valor particular de estos
 farmacos oncologicos en su arancel web, por lo que no se incluyen.
@@ -32,8 +32,8 @@ CLINICAS = [
     "Clinica INDISA",
     "Clinica Davila",
     "Clinica Universidad de los Andes",
-    "Hospital Clinico UC CHRISTUS",
-    "Clinica San Carlos de Apoquindo",
+    "UC Marcoleta",
+    "UC San Carlos",
 ]
 
 FECHA_DATOS = "2026-06 (arancel particular, horario habil)"
@@ -91,8 +91,8 @@ CATALOGO: list[dict] = [
             _o("Clinica INDISA", "PEMBROLIZUMAB 100 MG/4ML (KEYTRUDA)", 6_030_118),
             _o("Clinica Davila", "PEMBROLIZUMAB 100 MG/4 ML (KEYTRUDA) FA", 4_048_980),
             _o("Clinica Universidad de los Andes", "PEMBROLIZUMAB 100 MG FAM", 4_380_828),
-            _o("Hospital Clinico UC CHRISTUS", "PEMBROLIZUMAB 100MG 4ML (FX0045)", 4_063_300),
-            _o("Clinica San Carlos de Apoquindo", "PEMBROLIZUMAB 100MG 4ML (FX0045)", 4_469_630),
+            _o("UC Marcoleta", "PEMBROLIZUMAB 100MG 4ML (FX0045)", 4_063_300),
+            _o("UC San Carlos", "PEMBROLIZUMAB 100MG 4ML (FX0045)", 4_469_630),
         ],
     },
     {
@@ -105,8 +105,8 @@ CATALOGO: list[dict] = [
         "ofertas": [
             _o("Clinica INDISA", "DARATUMUMAB 400 MG/20 ML (DARZALEX)", 2_431_941),
             _o("Clinica Universidad de los Andes", "DARATUMUMAB 400 MG FAM", 2_796_600),
-            _o("Hospital Clinico UC CHRISTUS", "DARATUMUMAB 400 MG 20 ML X 1 FA (FO0573)", 2_319_665),
-            _o("Clinica San Carlos de Apoquindo", "DARATUMUMAB 400 MG 20 ML X 1 FA (FO0573)", 2_530_511),
+            _o("UC Marcoleta", "DARATUMUMAB 400 MG 20 ML X 1 FA (FO0573)", 2_319_665),
+            _o("UC San Carlos", "DARATUMUMAB 400 MG 20 ML X 1 FA (FO0573)", 2_530_511),
         ],
     },
     {
@@ -118,8 +118,8 @@ CATALOGO: list[dict] = [
         "presentacion": "Vial 1800 mg/15 mL solucion subcutanea",
         "ofertas": [
             _o("Clinica Universidad de los Andes", "DARATUMUMAB 1800 MG/15 ML SC", 5_616_940),
-            _o("Hospital Clinico UC CHRISTUS", "DARATUMUMAB SC 1800 MG (FO0641)", 5_473_958),
-            _o("Clinica San Carlos de Apoquindo", "DARATUMUMAB SC 1800 MG (FO0641)", 6_021_353),
+            _o("UC Marcoleta", "DARATUMUMAB SC 1800 MG (FO0641)", 5_473_958),
+            _o("UC San Carlos", "DARATUMUMAB SC 1800 MG (FO0641)", 6_021_353),
         ],
     },
     {
@@ -133,8 +133,8 @@ CATALOGO: list[dict] = [
             _o("Clinica INDISA", "NIVOLUMAB 100 MG/10 ML (OPDIVO)", 2_654_551),
             _o("Clinica Davila", "NIVOLUMAB 100 MG/10 ML (OPDIVO)", 1_916_720),
             _o("Clinica Universidad de los Andes", "NIVOLUMAB 100 MG FAM", 2_460_840),
-            _o("Hospital Clinico UC CHRISTUS", "NIVOLUMAB 100 MG REFRIGERADO (FO0152)", 2_129_885),
-            _o("Clinica San Carlos de Apoquindo", "NIVOLUMAB 100 MG REFRIGERADO (FO0152)", 2_321_652),
+            _o("UC Marcoleta", "NIVOLUMAB 100 MG REFRIGERADO (FO0152)", 2_129_885),
+            _o("UC San Carlos", "NIVOLUMAB 100 MG REFRIGERADO (FO0152)", 2_321_652),
         ],
     },
     {
@@ -149,8 +149,8 @@ CATALOGO: list[dict] = [
             _o("Clinica INDISA", "BEVACIZUMAB 100 MG/4 ML (ABXEDA)", 433_160, bioeq=True),
             _o("Clinica Davila", "BEVACIZUMAB 100 MG/4 ML (AVASTIN)", 541_362),
             _o("Clinica Universidad de los Andes", "BEVACIZUMAB FAM 100 MG/4 ML", 660_180),
-            _o("Hospital Clinico UC CHRISTUS", "BEVACIZUMAB 100 MG /4 ML *REFRIGERADO* (FO0026)", 586_265),
-            _o("Clinica San Carlos de Apoquindo", "BEVACIZUMAB 100 MG/4ML (FO0026)", 644_891),
+            _o("UC Marcoleta", "BEVACIZUMAB 100 MG /4 ML *REFRIGERADO* (FO0026)", 586_265),
+            _o("UC San Carlos", "BEVACIZUMAB 100 MG/4ML (FO0026)", 644_891),
         ],
     },
     {
@@ -166,10 +166,10 @@ CATALOGO: list[dict] = [
             _o("Clinica Davila", "RITUXIMAB 500 MG/50 ML (MABTHERA)", 1_301_000),
             _o("Clinica Davila", "RITUXIMAB (TRUXIMA) 500 MG", 728_730, bioeq=True),
             _o("Clinica Universidad de los Andes", "RITUXIMAB FAM 500 MG/50 ML", 1_926_360),
-            _o("Hospital Clinico UC CHRISTUS", "RITUXIMAB 500 MG *REFRIGERADO* (FO0092)", 1_750_563),
-            _o("Hospital Clinico UC CHRISTUS", "RITUXIMAB 500MG REFRIGERADO BIOSIMILAR (FX9037)", 394_485, bioeq=True),
-            _o("Clinica San Carlos de Apoquindo", "RITUXIMAB 500 MG (FO0092)", 1_925_619),
-            _o("Clinica San Carlos de Apoquindo", "RITUXIMAB 500MG BIOSIMILAR (FX9037)", 433_933, bioeq=True),
+            _o("UC Marcoleta", "RITUXIMAB 500 MG *REFRIGERADO* (FO0092)", 1_750_563),
+            _o("UC Marcoleta", "RITUXIMAB 500MG REFRIGERADO BIOSIMILAR (FX9037)", 394_485, bioeq=True),
+            _o("UC San Carlos", "RITUXIMAB 500 MG (FO0092)", 1_925_619),
+            _o("UC San Carlos", "RITUXIMAB 500MG BIOSIMILAR (FX9037)", 433_933, bioeq=True),
         ],
     },
     {
@@ -183,8 +183,8 @@ CATALOGO: list[dict] = [
             _o("Clinica INDISA", "CETUXIMAB 100 MG/20 ML (ERBITUX)", 425_051),
             _o("Clinica Davila", "CETUXIMAB 100 MG/20 ML (ERBITUX)", 502_244),
             _o("Clinica Universidad de los Andes", "CETUXIMAB 100 MG/20 ML FAM", 523_020),
-            _o("Hospital Clinico UC CHRISTUS", "CETUXIMAB 100 MG REFRIGERADO (FO0123)", 472_356),
-            _o("Clinica San Carlos de Apoquindo", "CETUXIMAB 100 MG REFRIGERADO (FO0123)", 519_591),
+            _o("UC Marcoleta", "CETUXIMAB 100 MG REFRIGERADO (FO0123)", 472_356),
+            _o("UC San Carlos", "CETUXIMAB 100 MG REFRIGERADO (FO0123)", 519_591),
         ],
     },
     {
@@ -197,8 +197,8 @@ CATALOGO: list[dict] = [
         "ofertas": [
             _o("Clinica INDISA", "IPILIMUMAB 50 MG (YERVOY)", 4_758_742),
             _o("Clinica Universidad de los Andes", "IPILIMUMAB FAM 50 MG / 10 ML", 3_917_688),
-            _o("Hospital Clinico UC CHRISTUS", "IPILIMUMAB 50MG EV AMP (FO0160)", 3_588_387),
-            _o("Clinica San Carlos de Apoquindo", "IPILIMUMAB 50MG EV AMP (FO0160)", 3_947_225),
+            _o("UC Marcoleta", "IPILIMUMAB 50MG EV AMP (FO0160)", 3_588_387),
+            _o("UC San Carlos", "IPILIMUMAB 50MG EV AMP (FO0160)", 3_947_225),
         ],
     },
     {
@@ -209,8 +209,8 @@ CATALOGO: list[dict] = [
         "registro_isp": "B-1990/13",
         "presentacion": "Vial 6 mg/3 mL concentrado para perfusion",
         "ofertas": [
-            _o("Hospital Clinico UC CHRISTUS", "IDURSULFASA 2 MG ML X 3ML (FX0063)", 4_308_856),
-            _o("Clinica San Carlos de Apoquindo", "IDURSULFASA 2 MG ML X 3ML (FX0063)", 4_739_741),
+            _o("UC Marcoleta", "IDURSULFASA 2 MG ML X 3ML (FX0063)", 4_308_856),
+            _o("UC San Carlos", "IDURSULFASA 2 MG ML X 3ML (FX0063)", 4_739_741),
         ],
     },
     {
@@ -222,8 +222,8 @@ CATALOGO: list[dict] = [
         "presentacion": "Vial 25 mg polvo para solucion para perfusion",
         "ofertas": [
             _o("Clinica Davila", "TIMOGLOBULINA DE CONEJO 25 MG FRASCO AMP", 817_528),
-            _o("Hospital Clinico UC CHRISTUS", "TIMOGLOBULINA 25 MG (FO0007)", 492_885),
-            _o("Clinica San Carlos de Apoquindo", "TIMOGLOBULINA 25 MG (FO0007)", 542_172),
+            _o("UC Marcoleta", "TIMOGLOBULINA 25 MG (FO0007)", 492_885),
+            _o("UC San Carlos", "TIMOGLOBULINA 25 MG (FO0007)", 542_172),
         ],
     },
 ]
