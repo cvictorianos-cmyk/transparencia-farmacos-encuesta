@@ -77,7 +77,26 @@ Luego abrir `http://localhost:8000/docs` para Swagger UI.
 | POST   | `/encuesta`                               | Guarda una respuesta del censo                     |
 | GET    | `/encuestas`                              | Lista las respuestas (censo)                       |
 | GET    | `/encuestas/export.csv`                   | Exporta el censo a CSV                             |
+| GET    | `/comparador`                             | Comparador web responsivo (móvil y escritorio)     |
+| GET    | `/catalogo`                               | Lista los 10 casos oncológicos precargados         |
+| GET    | `/comparar/{principio_activo}`            | Compara precios del fármaco entre las 5 clínicas   |
 | GET    | `/health`                                 | Healthcheck                                        |
+
+## Comparador web (10 casos precargados)
+
+`/comparador` es una página responsiva (usable desde **celular o computador**, sin
+instalar nada) que compara el precio particular de cada fármaco oncológico entre las
+cinco clínicas y resalta la más barata y el ahorro potencial, en la línea de GoodRx.
+
+Funciona sin scraping en vivo: los datos vienen de `app/catalogo.py`, un catálogo
+curado de **10 casos** de alto costo (precios REFERENCIALES, con fines académicos):
+pembrolizumab (Keytruda), daratumumab IV y SC (Darzalex / Darzalex Faspro),
+nivolumab (Opdivo), bevacizumab (Avastin), rituximab (Mabthera), cetuximab (Erbitux),
+ipilimumab (Yervoy), idursulfasa (Elaprase) y timoglobulina. Esto lo hace
+compatible con el plan **free de Render** (no requiere navegador headless).
+
+Los endpoints `/catalogo` y `/comparar/{principio_activo}` exponen los mismos datos
+en JSON para integraciones o para el AFE.
 
 ## Encuesta / censo (QR del AFE)
 

@@ -14,10 +14,11 @@ logging.basicConfig(
 
 app = FastAPI(
     title="API Benchmarking Fármacos Oncológicos",
-    version="0.1.0",
+    version="0.2.0",
     description=(
         "Automatiza el benchmarking de precios de fármacos oncológicos en clínicas "
-        "privadas de Chile, partiendo del Registro Sanitario del ISP."
+        "privadas de Chile, partiendo del Registro Sanitario del ISP. Incluye un "
+        "comparador web responsivo con 10 casos precargados."
     ),
 )
 
@@ -42,7 +43,10 @@ app.include_router(router)
 async def root():
     return {
         "name": "API Benchmarking Fármacos Oncológicos",
-        "version": "0.1.0",
+        "version": "0.2.0",
+        "comparador": "/comparador",
+        "catalogo": "/catalogo",
+        "encuesta": "/encuesta",
         "docs": "/docs",
         "health": "/health",
     }

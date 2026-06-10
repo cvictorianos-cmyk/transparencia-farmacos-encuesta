@@ -14,11 +14,13 @@ from .config import BASE_DIR
 from .models import BenchmarkRequest, BenchmarkSummary, EncuestaRespuesta
 from . import database as db
 from . import export as exporter
+from . import catalogo as cat
 from scrapers import CLINIC_SCRAPERS, ISPChileScraper
 
 router = APIRouter()
 
 _ENCUESTA_HTML = BASE_DIR / "app" / "static" / "encuesta.html"
+_COMPARADOR_HTML = BASE_DIR / "app" / "static" / "comparador.html"
 
 
 @router.get("/health")
@@ -29,6 +31,42 @@ async def health():
 @router.get("/clinicas", summary="Lista las clínicas soportadas")
 async def list_clinicas():
     return {"clinicas": list(CLINIC_SCRAPERS.keys())}
+
+
+# === Comparador / catalogo precargado (10 casos oncologicos) ===
+
+@router.get(
+    "/comparador",
+    response_class=HTMLResponse,
+    summary="Comparador web responsivo de precios (movil y escritorio)",
+    tags=["comparador"],
+)
+async def comparador_ui():
+    if not _COMPARADOR_HTML.exists():
+        raise HTTPException(500, "Comparador no encontrado")
+    return HTMLResponse(_COMPARADOR_HTML.read_text(encoding="utf-8"))
+
+
+@router.get(
+    "/catalogo",
+    summary="Lista los 10 casos de farmacos oncologicos disponibles",
+    tags=["comparador"],
+)
+async def get_catalogo():
+    casos = cat.listar_catalogo()
+    return {"total": len(casos), "clinicas": cat.CLINICAS, "casos": casos}
+
+
+@router.get(
+    "/comparar/{principio_activo}",
+    summary="Compara los precios de un farmaco entre las 5 clinicas",
+    tags=["comparador"],
+)
+async def get_comparar(principio_activo: str, marca: str | None = None):
+    data = cat.comparar(principio_activo, marca=marca)
+    if not data:
+        raise HTTPException(404, f"No hay datos para '{principio_activo}'")
+    return data
 
 
 @router.get(

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comparador de Precios · Fármacos Oncológicos</title>
+<style>
+  :root { --azul:#1F3A5F; --azul2:#2E5A88; --bg:#f4f6f9; --gris:#5b6470;
+          --ok:#1b8a5a; --okbg:#e6f4ec; --alerta:#b35900; --linea:#e2e7ee; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+         background:var(--bg); color:#1c2430; line-height:1.45; }
+  .wrap { max-width:760px; margin:0 auto; padding:0 14px 64px; }
+  header { background:var(--azul); color:#fff; padding:22px 16px; text-align:center; }
+  header h1 { margin:0 0 6px; font-size:1.15rem; }
+  header p { margin:0; font-size:.82rem; opacity:.9; }
+  .search { position:sticky; top:0; z-index:5; background:var(--bg); padding:14px 0 8px; }
+  .search input { width:100%; padding:13px 14px; border:1px solid #cdd5df; border-radius:11px;
+                  font-size:16px; background:#fff; }
+  .casos { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
+  .caso { background:#fff; border:1px solid var(--linea); border-radius:13px; padding:13px;
+          cursor:pointer; transition:.12s; text-align:left; }
+  .caso:hover, .caso:focus { border-color:var(--azul2); box-shadow:0 2px 8px rgba(0,0,0,.07); outline:none; }
+  .caso .pa { font-weight:700; color:var(--azul); text-transform:capitalize; font-size:.95rem; }
+  .caso .marca { font-size:.78rem; color:var(--gris); margin:2px 0 8px; }
+  .caso .min { font-size:.95rem; font-weight:700; }
+  .caso .ahorro { font-size:.72rem; color:var(--ok); margin-top:3px; }
+  .bio { display:inline-block; font-size:.65rem; background:var(--okbg); color:var(--ok);
+         border-radius:6px; padding:2px 6px; margin-top:7px; font-weight:700; }
+  .det { background:#fff; border-radius:14px; padding:18px 16px; margin-top:14px;
+         box-shadow:0 1px 4px rgba(0,0,0,.08); }
+  .det h2 { margin:0; color:var(--azul); font-size:1.1rem; text-transform:capitalize; }
+  .det .sub { font-size:.8rem; color:var(--gris); margin:3px 0 14px; }
+  .pres { border-top:1px solid var(--linea); padding-top:14px; margin-top:14px; }
+  .pres:first-of-type { border-top:0; padding-top:0; margin-top:0; }
+  .pres-head { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px; }
+  .pres-head .marca { font-weight:700; }
+  .pres-head .reg { font-size:.72rem; color:var(--gris); }
+  .ahorro-box { background:var(--okbg); border-radius:10px; padding:10px 12px; margin:10px 0;
+                font-size:.85rem; color:#14613f; }
+  .ahorro-box b { font-size:1.05rem; }
+  table { width:100%; border-collapse:collapse; margin-top:6px; }
+  th, td { text-align:left; padding:9px 8px; font-size:.85rem; border-bottom:1px solid var(--linea); }
+  th { color:var(--gris); font-weight:600; font-size:.74rem; text-transform:uppercase; letter-spacing:.03em; }
+  td.precio { text-align:right; font-variant-numeric:tabular-nums; font-weight:600; white-space:nowrap; }
+  tr.menor td { background:var(--okbg); }
+  tr.menor td.clinica::before { content:"★ "; color:var(--ok); }
+  .delta { font-size:.72rem; color:var(--alerta); }
+  .delta.cero { color:var(--ok); }
+  .back { background:none; border:0; color:var(--azul2); font-weight:700; cursor:pointer;
+          padding:6px 0; font-size:.9rem; }
+  .empty { text-align:center; color:var(--gris); padding:30px 10px; font-size:.9rem; }
+  .disc { font-size:.72rem; color:var(--gris); margin-top:12px; font-style:italic; }
+  footer { text-align:center; font-size:.72rem; color:var(--gris); margin-top:26px; }
+  footer a { color:var(--azul2); }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Comparador de Precios de Fármacos Oncológicos</h1>
+  <p>Clínicas privadas de Chile · Proyecto de Título MSIIN</p>
+</header>
+
+<div class="wrap">
+  <!-- Vista lista -->
+  <div id="vista-lista">
+    <div class="search">
+      <input id="q" type="text" placeholder="Buscar principio activo o marca… (ej: bevacizumab)" autocomplete="off">
+    </div>
+    <div id="casos" class="casos"></div>
+    <p id="sin-resultados" class="empty hidden">Sin resultados para tu búsqueda.</p>
+    <p class="disc" id="disc-lista"></p>
+  </div>
+
+  <!-- Vista detalle -->
+  <div id="vista-det" class="hidden">
+    <button class="back" onclick="volver()">← Volver al listado</button>
+    <div id="det" class="det"></div>
+  </div>
+
+  <footer>
+    Datos referenciales con fines académicos ·
+    <a href="/encuesta">Responder la encuesta</a> ·
+    <a href="/docs">API</a>
+  </footer>
+</div>
+
+<script>
+const fmt = n => "$" + (n ?? 0).toLocaleString("es-CL");
+let CASOS = [];
+
+async function cargar() {
+  const r = await fetch("/catalogo");
+  const data = await r.json();
+  CASOS = data.casos;
+  pintarLista(CASOS);
+  document.getElementById("disc-lista").textContent =
+    "Compara " + CASOS.length + " fármacos entre " + data.clinicas.length +
+    " clínicas. Precios referenciales (no son cotización formal).";
+}
+
+function pintarLista(items) {
+  const cont = document.getElementById("casos");
+  const vacio = document.getElementById("sin-resultados");
+  cont.innerHTML = "";
+  vacio.classList.toggle("hidden", items.length > 0);
+  items.forEach(c => {
+    const div = document.createElement("div");
+    div.className = "caso";
+    div.tabIndex = 0;
+    div.innerHTML =
+      '<div class="pa">' + c.principio_activo + '</div>' +
+      '<div class="marca">' + c.marca + '</div>' +
+      '<div class="min">desde ' + fmt(c.precio_min_clp) + '</div>' +
+      '<div class="ahorro">Ahorra hasta ' + fmt(c.ahorro_max_clp) +
+        ' (' + c.ahorro_max_pct + '%)</div>' +
+      (c.bioequivalente ? '<span class="bio">Tiene biosimilar</span>' : '');
+    const abrir = () => detalle(c.principio_activo, c.marca);
+    div.onclick = abrir;
+    div.onkeydown = e => { if (e.key === "Enter") abrir(); };
+    cont.appendChild(div);
+  });
+}
+
+document.getElementById("q").addEventListener("input", e => {
+  const t = e.target.value.toLowerCase().trim();
+  pintarLista(CASOS.filter(c =>
+    c.principio_activo.includes(t) || c.marca.toLowerCase().includes(t) ||
+    (c.indicacion || "").toLowerCase().includes(t)));
+});
+
+async function detalle(pa) {
+  const r = await fetch("/comparar/" + encodeURIComponent(pa));
+  if (!r.ok) return;
+  const data = await r.json();
+  const det = document.getElementById("det");
+  let html = '<h2>' + data.principio_activo + '</h2>' +
+             '<div class="sub">' + data.n_presentaciones +
+             ' presentación(es) · comparadas en 5 clínicas</div>';
+  data.presentaciones.forEach(p => {
+    html += '<div class="pres">' +
+      '<div class="pres-head"><span class="marca">' + p.marca + '</span>' +
+      '<span class="reg">Reg. ISP ' + p.registro_isp + '</span></div>' +
+      '<div class="sub">' + p.presentacion + ' · ' + p.indicacion + '</div>' +
+      '<div class="ahorro-box">Eligiendo la clínica más barata (' + p.clinica_mas_barata +
+        ') ahorras <b>' + fmt(p.ahorro_clp) + '</b> por vial frente a la más cara (' +
+        p.ahorro_pct + '%).</div>' +
+      '<table><thead><tr><th>Clínica</th><th style="text-align:right">Precio particular</th>' +
+        '<th style="text-align:right">vs. menor</th></tr></thead><tbody>';
+    p.precios.forEach(f => {
+      const cero = f.sobreprecio_vs_min_clp === 0;
+      html += '<tr class="' + (f.es_menor ? "menor" : "") + '">' +
+        '<td class="clinica">' + f.clinica + '</td>' +
+        '<td class="precio">' + fmt(f.precio_particular_clp) + '</td>' +
+        '<td class="precio"><span class="delta ' + (cero ? "cero" : "") + '">' +
+          (cero ? "menor precio" : "+" + fmt(f.sobreprecio_vs_min_clp) +
+            " (" + f.sobreprecio_vs_min_pct + "%)") +
+        '</span></td></tr>';
+    });
+    html += '</tbody></table></div>';
+  });
+  html += '<p class="disc">' + data.disclaimer + '</p>';
+  det.innerHTML = html;
+  document.getElementById("vista-lista").classList.add("hidden");
+  document.getElementById("vista-det").classList.remove("hidden");
+  window.scrollTo(0, 0);
+}
+
+function volver() {
+  document.getElementById("vista-det").classList.add("hidden");
+  document.getElementById("vista-lista").classList.remove("hidden");
+}
+
+cargar();
+</script>
+</body>
+</html>
