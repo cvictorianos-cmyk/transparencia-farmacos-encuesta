@@ -42,6 +42,42 @@ def _o(clinica, glosa, precio, bioeq=False):
     return {"clinica": clinica, "glosa": glosa, "precio": precio, "bioequivalente": bioeq}
 
 
+# Empresa titular segun el Registro Sanitario del ISP (registrosanitario.ispch.gob.cl).
+# Se resuelve por palabra clave de la glosa, evaluando primero las marcas de
+# biosimilares y luego las marcas innovadoras. Datos extraidos en jun-2026.
+_EMPRESAS_ISP = [
+    ("ABXEDA", "Laboratorios Recalcine S.A."),
+    ("RIXATHON", "Sandoz Chile S.p.A."),
+    ("TRUXIMA", "Celltrion Healthcare Chile S.p.A."),
+    ("BIOSIMILAR", "Biosimilar (Sandoz / Celltrion)"),
+    ("KEYTRUDA", "Merck Sharp & Dohme (I.A.) LLC"),
+    ("PEMBROLIZUMAB", "Merck Sharp & Dohme (I.A.) LLC"),
+    ("DARZALEX", "Johnson & Johnson de Chile S.A."),
+    ("DARATUMUMAB", "Johnson & Johnson de Chile S.A."),
+    ("OPDIVO", "Bristol-Myers Squibb de Chile"),
+    ("NIVOLUMAB", "Bristol-Myers Squibb de Chile"),
+    ("AVASTIN", "Roche Chile Ltda."),
+    ("MABTHERA", "Roche Chile Ltda."),
+    ("ERBITUX", "Merck S.A."),
+    ("CETUXIMAB", "Merck S.A."),
+    ("YERVOY", "Bristol-Myers Squibb de Chile"),
+    ("IPILIMUMAB", "Bristol-Myers Squibb de Chile"),
+    ("ELAPRASE", "Takeda Chile S.p.A."),
+    ("IDURSULFASA", "Takeda Chile S.p.A."),
+    ("TIMOGLOBULINA", "Sanofi (Genzyme)"),
+    ("BEVACIZUMAB", "Roche Chile Ltda."),   # glosas sin marca (Avastin de referencia)
+    ("RITUXIMAB", "Roche Chile Ltda."),     # glosas sin marca (Mabthera de referencia)
+]
+
+
+def _empresa(glosa: str) -> str:
+    g = glosa.upper()
+    for clave, empresa in _EMPRESAS_ISP:
+        if clave in g:
+            return empresa
+    return "No especificada"
+
+
 CATALOGO: list[dict] = [
     {
         "principio_activo": "pembrolizumab",
@@ -247,7 +283,9 @@ def comparar(principio_activo: str, marca: str | None = None) -> dict | None:
         for o in ofertas:
             filas.append({
                 "clinica": o["clinica"],
+                "principio_activo": c["principio_activo"],
                 "glosa": o["glosa"],
+                "empresa": _empresa(o["glosa"]),
                 "bioequivalente": o["bioequivalente"],
                 "tipo": "Bioequivalente" if o["bioequivalente"] else "Original",
                 "precio_particular_clp": o["precio"],
@@ -291,9 +329,10 @@ def comparar(principio_activo: str, marca: str | None = None) -> dict | None:
         "presentaciones": presentaciones,
         "disclaimer": (
             "Precios REALES del arancel particular publicado por cada clinica (" + FECHA_DATOS +
-            "). La columna 'Nombre en la clinica' muestra la glosa exacta del arancel y la columna "
-            "'Tipo' indica si es el medicamento original (marca innovadora) o un bioequivalente/"
-            "biosimilar. Clinica Santa Maria y Clinica Alemana no publican el valor particular de "
-            "estos farmacos. Fines academicos (Proyecto de Titulo MSIIN); no es una cotizacion formal."
+            "). 'Nombre en la clinica' es la glosa exacta del arancel; 'Empresa (ISP)' es el titular "
+            "del registro sanitario segun registrosanitario.ispch.gob.cl; 'Tipo' (solo Premium) indica "
+            "si es el medicamento original (marca innovadora) o un bioequivalente/biosimilar. Clinica "
+            "Santa Maria y Clinica Alemana no publican el valor particular de estos farmacos. Fines "
+            "academicos (Proyecto de Titulo MSIIN); no es una cotizacion formal."
         ),
     }

@@ -68,10 +68,14 @@
   .src { display:inline-block; font-size:.6rem; font-weight:800; border-radius:5px; padding:1px 5px; margin-left:5px; vertical-align:1px; }
   .src.real { background:#e3edf9; color:var(--azul2); }
   .src.ref { background:#eee; color:#888; }
-  td.glosa { font-size:.74rem; color:#3a434f; line-height:1.25; }
+  td.glosa { font-size:.74rem; color:#3a434f; line-height:1.25; min-width:150px; }
+  td.pa-col { font-size:.76rem; text-transform:capitalize; color:var(--azul2); }
+  td.emp { font-size:.72rem; color:#3a434f; min-width:130px; }
   .tipo { display:inline-block; font-size:.66rem; font-weight:800; border-radius:6px; padding:2px 7px; white-space:nowrap; }
   .tipo.bio { background:var(--okbg); color:var(--ok); }
   .tipo.orig { background:#eef1f5; color:var(--gris); }
+  .tw { overflow-x:auto; -webkit-overflow-scrolling:touch; margin:0 -2px; }
+  .tw table { min-width:560px; }
   /* fila bloqueada (plan gratuito) */
   tr.lock td { color:#aab1bb; background:#fafbfc; }
   tr.lock td.clinica::before { content:"🔒 "; }
@@ -254,7 +258,9 @@ async function detalle(pa) {
       '<div class="sub">' + p.presentacion + '</div>' +
       '<div class="ahorro-box">Eligiendo la opción más barata (' + f2(p.clinica_mas_barata) +
         ') ahorras <b>' + fmt(p.ahorro_clp) + '</b> por vial (' + p.ahorro_pct + '%).</div>' +
-      '<table><thead><tr><th>Clínica</th><th>Nombre en la clínica</th><th>Tipo</th>' +
+      '<div class="tw"><table><thead><tr><th>Clínica</th><th>Principio activo</th>' +
+        '<th>Nombre en la clínica</th><th>Empresa (ISP)</th>' +
+        (PLAN === "prem" ? '<th>Tipo</th>' : '') +
         '<th style="text-align:right">Particular</th>' +
         '<th style="text-align:right">vs. menor</th></tr></thead><tbody>';
     visibles.forEach(f => {
@@ -264,8 +270,10 @@ async function detalle(pa) {
         : '<span class="tipo orig">Original</span>';
       html += '<tr class="' + (f.es_menor ? "menor" : "") + '">' +
         '<td class="clinica">' + f2(f.clinica) + '</td>' +
+        '<td class="pa-col">' + f.principio_activo + '</td>' +
         '<td class="glosa">' + f.glosa + '</td>' +
-        '<td>' + chip + '</td>' +
+        '<td class="emp">' + f.empresa + '</td>' +
+        (PLAN === "prem" ? '<td>' + chip + '</td>' : '') +
         '<td class="precio">' + fmt(f.precio_particular_clp) + '</td>' +
         '<td class="precio"><span class="delta ' + (cero ? "cero" : "") + '">' +
           (cero ? "menor precio" : "+" + fmt(f.sobreprecio_vs_min_clp) +
@@ -273,10 +281,11 @@ async function detalle(pa) {
     });
     ocultas.forEach(() => {
       html += '<tr class="lock"><td class="clinica">Oculta</td>' +
-        '<td class="glosa">•••••••</td><td>🔒</td>' +
+        '<td class="pa-col">•••</td><td class="glosa">•••••••</td><td class="emp">•••••</td>' +
+        (PLAN === "prem" ? '<td>🔒</td>' : '') +
         '<td class="precio">$ •••••••</td><td class="precio">—</td></tr>';
     });
-    html += '</tbody></table>';
+    html += '</tbody></table></div>';
     if (p.ahorro_biosimilar) {
       const ab = p.ahorro_biosimilar;
       html += '<div class="biosim">💊 <b>Bioequivalente disponible:</b> desde <b>' +
