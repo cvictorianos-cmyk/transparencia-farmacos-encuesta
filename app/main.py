@@ -1,8 +1,12 @@
 """Entrypoint de la API FastAPI."""
+import base64
 import logging
+import os
+import secrets
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 
 from .api import router
 from .database import init_db
@@ -34,6 +38,36 @@ app.add_middleware(
 @app.on_event("startup")
 async def _startup():
     init_db()
+
+
+# === Proteccion con usuario y contraseña (HTTP Basic) durante el desarrollo ===
+# Credenciales configurables via variables de entorno en Render (AUTH_USER / AUTH_PASS).
+AUTH_USER = os.environ.get("AUTH_USER", "carlos")
+AUTH_PASS = os.environ.get("AUTH_PASS", "Transparencia2026")
+
+# Rutas publicas: /health (healthcheck de Render) y /encuesta (QR del censo del AFE).
+_RUTAS_PUBLICAS = ("/health", "/encuesta")
+
+
+@app.middleware("http")
+async def basic_auth_middleware(request: Request, call_next):
+    path = request.url.path
+    if any(path == r or path.startswith(r + "/") for r in _RUTAS_PUBLICAS):
+        return await call_next(request)
+    auth = request.headers.get("authorization", "")
+    if auth.lower().startswith("basic "):
+        try:
+            decoded = base64.b64decode(auth.split(" ", 1)[1]).decode("utf-8")
+            user, _, pwd = decoded.partition(":")
+            if secrets.compare_digest(user, AUTH_USER) and secrets.compare_digest(pwd, AUTH_PASS):
+                return await call_next(request)
+        except Exception:
+            pass
+    return Response(
+        status_code=401,
+        headers={"WWW-Authenticate": 'Basic realm="TransparenciaRx (acceso restringido)"'},
+        content="Acceso restringido: ingresa usuario y contrasena.",
+    )
 
 
 app.include_router(router)
