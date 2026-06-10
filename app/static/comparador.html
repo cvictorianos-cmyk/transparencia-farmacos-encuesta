@@ -3,20 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Comparador de Precios · Fármacos Oncológicos</title>
+<title>TransparenciaRx · Comparador de Fármacos Oncológicos</title>
 <style>
   :root { --azul:#1F3A5F; --azul2:#2E5A88; --bg:#f4f6f9; --gris:#5b6470;
-          --ok:#1b8a5a; --okbg:#e6f4ec; --alerta:#b35900; --linea:#e2e7ee; }
+          --ok:#1b8a5a; --okbg:#e6f4ec; --alerta:#b35900; --linea:#e2e7ee;
+          --oro:#b8860b; --orobg:#fdf6e3; --orotxt:#8a6508; --adbg:#fdecec; --adtxt:#a33; }
   * { box-sizing:border-box; }
   body { margin:0; font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
          background:var(--bg); color:#1c2430; line-height:1.45; }
   .wrap { max-width:760px; margin:0 auto; padding:0 14px 64px; }
-  header { background:var(--azul); color:#fff; padding:22px 16px; text-align:center; }
-  header h1 { margin:0 0 6px; font-size:1.15rem; }
-  header p { margin:0; font-size:.82rem; opacity:.9; }
-  .search { position:sticky; top:0; z-index:5; background:var(--bg); padding:14px 0 8px; }
+  header { background:var(--azul); color:#fff; padding:18px 16px 14px; text-align:center; }
+  header h1 { margin:0 0 4px; font-size:1.2rem; }
+  header p { margin:0; font-size:.78rem; opacity:.9; }
+  .plan-badge { display:inline-block; margin-top:8px; font-size:.68rem; font-weight:800;
+                letter-spacing:.06em; border-radius:999px; padding:3px 12px; }
+  .plan-badge.free { background:#fff; color:var(--azul); }
+  .plan-badge.prem { background:var(--oro); color:#fff; }
+  /* toggle de plan */
+  .toggle { display:flex; gap:6px; justify-content:center; margin:14px 0 4px; }
+  .toggle button { border:1px solid #cdd5df; background:#fff; border-radius:999px;
+                   padding:9px 18px; font-size:.85rem; font-weight:700; cursor:pointer; color:var(--gris); }
+  .toggle button.act-free { background:var(--azul); border-color:var(--azul); color:#fff; }
+  .toggle button.act-prem { background:var(--oro); border-color:var(--oro); color:#fff; }
+  .search { position:sticky; top:0; z-index:5; background:var(--bg); padding:10px 0 8px; }
   .search input { width:100%; padding:13px 14px; border:1px solid #cdd5df; border-radius:11px;
                   font-size:16px; background:#fff; }
+  /* publicidad (solo plan gratuito) */
+  .ad { background:var(--adbg); border:1px dashed #e0a3a3; border-radius:11px; padding:10px 13px;
+        margin:10px 0; font-size:.8rem; color:var(--adtxt); }
+  .ad .tag { font-size:.62rem; font-weight:800; letter-spacing:.08em; display:block; margin-bottom:2px; }
+  /* alertas premium */
+  .alertbox { background:var(--orobg); border:1px solid #e8d49a; border-radius:11px;
+              padding:10px 13px; margin:10px 0; font-size:.8rem; color:var(--orotxt); }
   .casos { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
   .caso { background:#fff; border:1px solid var(--linea); border-radius:13px; padding:13px;
           cursor:pointer; transition:.12s; text-align:left; }
@@ -47,8 +65,32 @@
   tr.menor td.clinica::before { content:"★ "; color:var(--ok); }
   .delta { font-size:.72rem; color:var(--alerta); }
   .delta.cero { color:var(--ok); }
-  .back { background:none; border:0; color:var(--azul2); font-weight:700; cursor:pointer;
-          padding:6px 0; font-size:.9rem; }
+  .src { display:inline-block; font-size:.6rem; font-weight:800; border-radius:5px; padding:1px 5px; margin-left:5px; vertical-align:1px; }
+  .src.real { background:#e3edf9; color:var(--azul2); }
+  .src.ref { background:#eee; color:#888; }
+  /* fila bloqueada (plan gratuito) */
+  tr.lock td { color:#aab1bb; background:#fafbfc; }
+  tr.lock td.clinica::before { content:"🔒 "; }
+  .cta-prem { display:block; width:100%; margin:12px 0 4px; background:var(--oro); color:#fff;
+              border:0; border-radius:11px; padding:13px; font-size:.92rem; font-weight:800; cursor:pointer; }
+  .cta-prem small { display:block; font-weight:500; font-size:.72rem; opacity:.92; }
+  /* ficha premium */
+  .ficha { background:var(--orobg); border:1px solid #e8d49a; border-radius:11px; padding:12px 13px; margin:12px 0; }
+  .ficha h3 { margin:0 0 6px; font-size:.82rem; color:var(--orotxt); text-transform:uppercase; letter-spacing:.05em; }
+  .ficha p { margin:3px 0; font-size:.82rem; }
+  .biosim { background:#e6f4ec; border:1px solid #b9dec9; border-radius:11px; padding:12px 13px; margin:12px 0; font-size:.84rem; color:#14613f; }
+  /* cupon premium */
+  .cupon { border:2px dashed var(--oro); border-radius:13px; padding:14px; margin:12px 0; text-align:center; background:#fffdf7; }
+  .cupon .off { font-size:1.6rem; font-weight:900; color:var(--oro); }
+  .cupon .cod { font-family:ui-monospace,Consolas,monospace; background:var(--orobg); border-radius:8px;
+                padding:7px 12px; display:inline-block; margin:8px 0; font-weight:700; letter-spacing:.08em; color:var(--orotxt); }
+  .cupon p { margin:4px 0; font-size:.78rem; color:var(--gris); }
+  .qr { width:84px; height:84px; margin:8px auto 2px; display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+  .qr i { background:var(--azul); border-radius:1px; }
+  .qr i.w { background:transparent; }
+  .domicilio { background:var(--azul); color:#fff; border-radius:11px; padding:12px 14px; margin:12px 0; font-size:.84rem; }
+  .domicilio b { display:block; margin-bottom:3px; }
+  .back { background:none; border:0; color:var(--azul2); font-weight:700; cursor:pointer; padding:6px 0; font-size:.9rem; }
   .empty { text-align:center; color:var(--gris); padding:30px 10px; font-size:.9rem; }
   .disc { font-size:.72rem; color:var(--gris); margin-top:12px; font-style:italic; }
   footer { text-align:center; font-size:.72rem; color:var(--gris); margin-top:26px; }
@@ -58,16 +100,31 @@
 </head>
 <body>
 <header>
-  <h1>Comparador de Precios de Fármacos Oncológicos</h1>
-  <p>Clínicas privadas de Chile · Proyecto de Título MSIIN</p>
+  <h1>TransparenciaRx</h1>
+  <p>Comparador de fármacos oncológicos · Clínicas de Chile · Proyecto de Título MSIIN</p>
+  <span id="plan-badge" class="plan-badge free">VERSIÓN GRATUITA</span>
 </header>
 
 <div class="wrap">
+  <div class="toggle">
+    <button id="btn-free" class="act-free" onclick="setPlan('free')">Gratuita</button>
+    <button id="btn-prem" onclick="setPlan('prem')">Premium · $4.990/mes</button>
+  </div>
+
   <!-- Vista lista -->
   <div id="vista-lista">
     <div class="search">
-      <input id="q" type="text" placeholder="Buscar principio activo o marca… (ej: bevacizumab)" autocomplete="off">
+      <input id="q" type="text" placeholder="Buscar fármaco… (ej: bevacizumab)" autocomplete="off">
     </div>
+
+    <div id="ad-lista" class="ad">
+      <span class="tag">PUBLICIDAD</span>
+      Seguros oncológicos · Cotiza tu cobertura complementaria y conoce planes con copago preferente.
+    </div>
+    <div id="alert-lista" class="alertbox hidden">
+      🔔 <b>Tus alertas activas:</b> 3 fármacos con baja de precio esta semana. Sin publicidad.
+    </div>
+
     <div id="casos" class="casos"></div>
     <p id="sin-resultados" class="empty hidden">Sin resultados para tu búsqueda.</p>
     <p class="disc" id="disc-lista"></p>
@@ -80,15 +137,29 @@
   </div>
 
   <footer>
-    Datos referenciales con fines académicos ·
-    <a href="/encuesta">Responder la encuesta</a> ·
-    <a href="/docs">API</a>
+    Datos: arancel público UC CHRISTUS + referenciales · fines académicos ·
+    <a href="/encuesta">Responder la encuesta</a> · <a href="/docs">API</a>
   </footer>
 </div>
 
 <script>
 const fmt = n => "$" + (n ?? 0).toLocaleString("es-CL");
-let CASOS = [];
+let CASOS = [], PLAN = "free", PA_ACTUAL = null;
+const FREE_N = 3; // clinicas visibles en plan gratuito
+
+function setPlan(p) {
+  PLAN = p;
+  document.getElementById("btn-free").className = p === "free" ? "act-free" : "";
+  document.getElementById("btn-prem").className = p === "prem" ? "act-prem" : "";
+  const badge = document.getElementById("plan-badge");
+  badge.className = "plan-badge " + (p === "free" ? "free" : "prem");
+  badge.textContent = p === "free" ? "VERSIÓN GRATUITA" : "PREMIUM";
+  document.getElementById("ad-lista").classList.toggle("hidden", p !== "free");
+  document.getElementById("alert-lista").classList.toggle("hidden", p !== "prem");
+  if (PA_ACTUAL && !document.getElementById("vista-det").classList.contains("hidden")) {
+    detalle(PA_ACTUAL); // repintar detalle con el nuevo plan
+  }
+}
 
 async function cargar() {
   const r = await fetch("/catalogo");
@@ -97,7 +168,7 @@ async function cargar() {
   pintarLista(CASOS);
   document.getElementById("disc-lista").textContent =
     "Compara " + CASOS.length + " fármacos entre " + data.clinicas.length +
-    " clínicas. Precios referenciales (no son cotización formal).";
+    " clínicas (UC CHRISTUS con precios reales del arancel público).";
 }
 
 function pintarLista(items) {
@@ -116,7 +187,7 @@ function pintarLista(items) {
       '<div class="ahorro">Ahorra hasta ' + fmt(c.ahorro_max_clp) +
         ' (' + c.ahorro_max_pct + '%)</div>' +
       (c.bioequivalente ? '<span class="bio">Tiene biosimilar</span>' : '');
-    const abrir = () => detalle(c.principio_activo, c.marca);
+    const abrir = () => detalle(c.principio_activo);
     div.onclick = abrir;
     div.onkeydown = e => { if (e.key === "Enter") abrir(); };
     cont.appendChild(div);
@@ -130,36 +201,94 @@ document.getElementById("q").addEventListener("input", e => {
     (c.indicacion || "").toLowerCase().includes(t)));
 });
 
+function qrFake() {
+  // patron decorativo tipo QR (demo academica)
+  let cells = "";
+  for (let i = 0; i < 49; i++) {
+    const on = (i * 7 + 13) % 3 !== 0 || i % 11 === 0;
+    cells += '<i class="' + (on ? "" : "w") + '"></i>';
+  }
+  return '<div class="qr">' + cells + '</div>';
+}
+
+function cupon(pa) {
+  const cod = "TRX-PRM-" + Math.abs([...pa].reduce((a,c)=>a*31+c.charCodeAt(0),7) % 90000 + 10000);
+  return '<div class="cupon">' +
+    '<div class="off">32% OFF</div>' +
+    '<p><b>Copago consulta oncológica ambulatoria</b></p>' +
+    '<span class="cod">' + cod + '</span>' +
+    qrFake() +
+    '<p>Muestra este código en caja o agenda · No aplica a medicamentos · Válido 30 días</p>' +
+    '</div>';
+}
+
 async function detalle(pa) {
+  PA_ACTUAL = pa;
   const r = await fetch("/comparar/" + encodeURIComponent(pa));
   if (!r.ok) return;
   const data = await r.json();
   const det = document.getElementById("det");
   let html = '<h2>' + data.principio_activo + '</h2>' +
-             '<div class="sub">' + data.n_presentaciones +
-             ' presentación(es) · comparadas en 5 clínicas</div>';
+             '<div class="sub">' + data.n_presentaciones + ' presentación(es) · ' +
+             (PLAN === "free" ? FREE_N + " de 7 clínicas (gratuito)" : "7 clínicas · Premium") + '</div>';
+
+  if (PLAN === "free") {
+    html += '<div class="ad"><span class="tag">PUBLICIDAD</span>Farmacias asociadas: genéricos y biosimilares hasta 70% más baratos.</div>';
+  }
+
   data.presentaciones.forEach(p => {
+    const visibles = PLAN === "prem" ? p.precios : p.precios.slice(0, FREE_N);
+    const ocultas = PLAN === "prem" ? [] : p.precios.slice(FREE_N);
     html += '<div class="pres">' +
       '<div class="pres-head"><span class="marca">' + p.marca + '</span>' +
-      '<span class="reg">Reg. ISP ' + p.registro_isp + '</span></div>' +
-      '<div class="sub">' + p.presentacion + ' · ' + p.indicacion + '</div>' +
-      '<div class="ahorro-box">Eligiendo la clínica más barata (' + p.clinica_mas_barata +
-        ') ahorras <b>' + fmt(p.ahorro_clp) + '</b> por vial frente a la más cara (' +
-        p.ahorro_pct + '%).</div>' +
-      '<table><thead><tr><th>Clínica</th><th style="text-align:right">Precio particular</th>' +
+      '<span class="reg">Reg. ISP ' + p.registro_isp + (p.codigo_uc ? ' · Cód. UC ' + p.codigo_uc : '') + '</span></div>' +
+      '<div class="sub">' + p.presentacion + '</div>' +
+      '<div class="ahorro-box">Eligiendo la opción más barata (' + p.clinica_mas_barata +
+        ') ahorras <b>' + fmt(p.ahorro_clp) + '</b> por vial (' + p.ahorro_pct + '%).</div>' +
+      '<table><thead><tr><th>Clínica</th><th style="text-align:right">Particular</th>' +
         '<th style="text-align:right">vs. menor</th></tr></thead><tbody>';
-    p.precios.forEach(f => {
+    visibles.forEach(f => {
       const cero = f.sobreprecio_vs_min_clp === 0;
       html += '<tr class="' + (f.es_menor ? "menor" : "") + '">' +
-        '<td class="clinica">' + f.clinica + '</td>' +
+        '<td class="clinica">' + f.clinica +
+          '<span class="src ' + (f.fuente === "real" ? "real" : "ref") + '">' +
+          (f.fuente === "real" ? "REAL" : "REF") + '</span></td>' +
         '<td class="precio">' + fmt(f.precio_particular_clp) + '</td>' +
         '<td class="precio"><span class="delta ' + (cero ? "cero" : "") + '">' +
           (cero ? "menor precio" : "+" + fmt(f.sobreprecio_vs_min_clp) +
-            " (" + f.sobreprecio_vs_min_pct + "%)") +
-        '</span></td></tr>';
+            " (" + f.sobreprecio_vs_min_pct + "%)") + '</span></td></tr>';
     });
-    html += '</tbody></table></div>';
+    ocultas.forEach(() => {
+      html += '<tr class="lock"><td class="clinica">Clínica oculta</td>' +
+        '<td class="precio">$ •••••••</td><td class="precio">—</td></tr>';
+    });
+    html += '</tbody></table>';
+
+    if (PLAN === "free" && ocultas.length) {
+      html += '<button class="cta-prem" onclick="setPlan(\'prem\')">Ver las 7 clínicas + alertas' +
+              '<small>Suscríbete a Premium por $4.990/mes · sin publicidad · cupón copago · oncólogo a domicilio</small></button>';
+    }
+
+    if (PLAN === "prem") {
+      html += '<div class="ficha"><h3>Ficha del fármaco</h3>' +
+        '<p><b>Indicación:</b> ' + p.indicacion + '</p>' +
+        '<p><b>Titular ISP:</b> ' + p.titular + '</p>' +
+        '<p><b>Bioequivalente/biosimilar:</b> ' + (p.bioequivalente ? "Sí, disponible en el mercado" : "No disponible aún") + '</p>' +
+        '<p>🔔 <b>Alerta de precio activada:</b> te avisamos si baja en cualquiera de las 7 clínicas.</p></div>';
+      if (p.biosimilar_uc) {
+        const b = p.biosimilar_uc;
+        html += '<div class="biosim">💊 <b>' + b.glosa + ':</b> ' +
+          fmt(b["Hospital Clinico UC CHRISTUS"]) + ' en Hospital Clínico UC y ' +
+          fmt(b["Clinica San Carlos de Apoquindo"]) + ' en San Carlos de Apoquindo. ' +
+          'Hasta <b>77% más barato</b> que la marca por el mismo principio activo.</div>';
+      }
+      html += '<div class="domicilio"><b>🏠 Oncólogo a domicilio</b>' +
+        'Administración guiada por enfermera oncológica certificada en tu casa. Agenda en 1 toque (servicio Premium).</div>' +
+        cupon(data.principio_activo);
+    }
+    html += '</div>';
   });
+
   html += '<p class="disc">' + data.disclaimer + '</p>';
   det.innerHTML = html;
   document.getElementById("vista-lista").classList.add("hidden");
@@ -168,6 +297,7 @@ async function detalle(pa) {
 }
 
 function volver() {
+  PA_ACTUAL = null;
   document.getElementById("vista-det").classList.add("hidden");
   document.getElementById("vista-lista").classList.remove("hidden");
 }
