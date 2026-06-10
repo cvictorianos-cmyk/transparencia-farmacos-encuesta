@@ -70,6 +70,20 @@ async def basic_auth_middleware(request: Request, call_next):
     )
 
 
+# Login de la version Premium del comparador (mismas credenciales por ahora).
+@app.post("/premium/login")
+async def premium_login(request: Request):
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    user = str(body.get("usuario", ""))
+    pwd = str(body.get("contrasena", ""))
+    if secrets.compare_digest(user, AUTH_USER) and secrets.compare_digest(pwd, AUTH_PASS):
+        return {"ok": True, "plan": "premium"}
+    return Response(status_code=401, content='{"ok": false}', media_type="application/json")
+
+
 app.include_router(router)
 
 

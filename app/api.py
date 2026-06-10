@@ -70,6 +70,19 @@ async def get_comparar(principio_activo: str, marca: str | None = None):
 
 
 @router.get(
+    "/historial/{principio_activo}",
+    summary="Serie temporal de precios por clinica (linea de tiempo Premium)",
+    tags=["comparador"],
+)
+async def get_historial(principio_activo: str):
+    from . import historial as hist
+    data = hist.serie_historica(principio_activo)
+    if not data:
+        raise HTTPException(404, f"No hay historial para '{principio_activo}'")
+    return data
+
+
+@router.get(
     "/bioequivalentes/{principio_activo}",
     summary="Lista productos del ISP para un principio activo (sin guardar)",
 )

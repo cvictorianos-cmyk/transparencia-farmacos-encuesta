@@ -1,0 +1,41 @@
+name: Recolector diario de precios
+
+# Corre todos los dias a las 10:00 UTC (06:00 Chile, hora habil temprana)
+# y tambien se puede lanzar a mano desde la pestaña Actions de GitHub.
+on:
+  schedule:
+    - cron: "0 10 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  recolectar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Dependencias
+        run: pip install httpx
+
+      - name: Recolectar precios del dia
+        run: python scripts/recolectar_diario.py
+
+      - name: Commit del historial
+        run: |
+          git config user.name "recolector-bot"
+          git config user.email "actions@github.com"
+          git add data/historial_precios.csv
+          if git diff --cached --quiet; then
+            echo "Sin cambios que commitear."
+          else
+            git commit -m "Registro diario de precios $(date -u +%F)"
+            git push
+          fi
