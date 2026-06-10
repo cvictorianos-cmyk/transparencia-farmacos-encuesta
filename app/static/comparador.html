@@ -103,7 +103,7 @@
   .disc { font-size:.72rem; color:var(--gris); margin-top:12px; font-style:italic; }
   footer { text-align:center; font-size:.72rem; color:var(--gris); margin-top:26px; }
   footer a { color:var(--azul2); }
-  .hidden { display:none; }
+  .hidden { display:none !important; }
   /* imagen del farmaco en la tarjeta */
   .caso .img { display:flex; justify-content:center; margin-bottom:8px; }
   .caso .img svg { width:64px; height:64px; }
@@ -336,7 +336,11 @@ function abrirLogin() {
   document.getElementById("modal-login").classList.remove("hidden");
   document.getElementById("lg-user").focus();
 }
-function cerrarLogin() { document.getElementById("modal-login").classList.add("hidden"); }
+function cerrarLogin() {
+  document.getElementById("modal-login").classList.add("hidden");
+  // al cancelar, garantizar que el usuario queda en la version gratuita
+  if (!PREMIUM_OK) { PLAN = "free"; setPlan("free"); }
+}
 async function loginPremium() {
   const usuario = document.getElementById("lg-user").value.trim();
   const contrasena = document.getElementById("lg-pass").value;
