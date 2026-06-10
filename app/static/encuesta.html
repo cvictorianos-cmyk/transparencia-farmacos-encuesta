@@ -132,7 +132,20 @@
       <p class="hint">Si no recuerdas un dato exacto, deja una estimación o déjalo en blanco.</p>
 
       <label>Fármaco oncológico usado <span class="opt">(opcional)</span></label>
-      <input type="text" name="farmaco_oncologico" placeholder="Ej: Bevacizumab / Avastin">
+      <select name="farmaco_oncologico">
+        <option value="">Selecciona…</option>
+        <option>Pembrolizumab (Keytruda)</option>
+        <option>Daratumumab (Darzalex)</option>
+        <option>Nivolumab (Opdivo)</option>
+        <option>Bevacizumab (Avastin)</option>
+        <option>Rituximab (Mabthera)</option>
+        <option>Cetuximab (Erbitux)</option>
+        <option>Ipilimumab (Yervoy)</option>
+        <option>Idursulfasa (Elaprase)</option>
+        <option>Timoglobulina</option>
+        <option>Otro</option>
+        <option>No lo sé</option>
+      </select>
 
       <label>Precio aproximado pagado por dosis (CLP) <span class="opt">(opcional)</span></label>
       <select name="precio_pagado_rango">
@@ -177,7 +190,16 @@
       <div class="scale-ends"><span>Muy fácil</span><span>Muy difícil</span></div>
 
       <label>Gasto de bolsillo mensual en el tratamiento (CLP) <span class="opt">(opcional)</span></label>
-      <input type="number" name="gasto_bolsillo_mensual_clp" inputmode="numeric" placeholder="Ej: 800000" min="0">
+      <select name="gasto_bolsillo_rango">
+        <option value="">Selecciona un rango…</option>
+        <option>Menos de $100.000</option>
+        <option>$100.000 - $300.000</option>
+        <option>$300.000 - $600.000</option>
+        <option>$600.000 - $1.000.000</option>
+        <option>$1.000.000 - $2.000.000</option>
+        <option>Más de $2.000.000</option>
+        <option>No sé / no recuerdo</option>
+      </select>
 
       <label>¿Usarías un comparador de precios para tu próximo tratamiento?</label>
       <div class="scale">

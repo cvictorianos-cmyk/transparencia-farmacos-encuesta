@@ -38,6 +38,48 @@ CLINICAS = [
 
 FECHA_DATOS = "2026-06 (arancel particular, horario habil)"
 
+# Categorias clinicas (tipo de cancer / area) a las que se asocia cada principio
+# activo, segun sus indicaciones. Un farmaco puede pertenecer a varias.
+CATEGORIAS_POR_PA = {
+    "pembrolizumab": ["Pulmón", "Mama", "Estómago", "Melanoma", "Vejiga"],
+    "daratumumab": ["Mieloma múltiple"],
+    "nivolumab": ["Pulmón", "Melanoma", "Renal", "Estómago"],
+    "bevacizumab": ["Colon", "Pulmón", "Renal", "Ovario"],
+    "rituximab": ["Linfoma", "Leucemia"],
+    "cetuximab": ["Colon", "Cabeza y cuello"],
+    "ipilimumab": ["Melanoma", "Renal"],
+    "idursulfasa": ["Enfermedades raras"],
+    "timoglobulina": ["Trasplante / inmunología"],
+}
+
+# Emoji por categoria (para las tarjetas de la primera pagina).
+_CAT_ICON = {
+    "Mama": "🎀", "Pulmón": "🫁", "Colon": "🧬", "Estómago": "🩺", "Próstata": "🧔",
+    "Melanoma": "🧴", "Renal": "🫘", "Vejiga": "💧", "Ovario": "🌸",
+    "Linfoma": "🩸", "Leucemia": "🩸", "Mieloma múltiple": "🦴",
+    "Cabeza y cuello": "👤", "Enfermedades raras": "🧪", "Trasplante / inmunología": "🫀",
+}
+
+
+def categorias_de(pa: str) -> list[str]:
+    return CATEGORIAS_POR_PA.get(_slug(pa), ["Otros"])
+
+
+def listar_categorias() -> list[dict]:
+    """Lista de categorias oncologicas con la cantidad de farmacos en cada una."""
+    agrupado: dict[str, set] = {}
+    for c in CATALOGO:
+        pa = c["principio_activo"]
+        for cat in categorias_de(pa):
+            agrupado.setdefault(cat, set()).add(pa)
+    out = [
+        {"categoria": cat, "icono": _CAT_ICON.get(cat, "💊"),
+         "n_farmacos": len(pas), "farmacos": sorted(pas)}
+        for cat, pas in agrupado.items()
+    ]
+    out.sort(key=lambda x: (-x["n_farmacos"], x["categoria"]))
+    return out
+
 
 def _o(clinica, glosa, precio, bioeq=False):
     return {"clinica": clinica, "glosa": glosa, "precio": precio, "bioequivalente": bioeq}
@@ -302,10 +344,14 @@ def _tiene_biosimilar(caso: dict) -> bool:
     return any(o["bioequivalente"] for o in caso["ofertas"])
 
 
-def listar_catalogo() -> list[dict]:
-    """Devuelve una vista resumida de los casos disponibles."""
+def listar_catalogo(categoria: str | None = None) -> list[dict]:
+    """Devuelve una vista resumida de los casos. Si se da `categoria`, filtra."""
+    cat_f = categoria.strip().lower() if categoria else None
     out = []
     for c in CATALOGO:
+        cats = categorias_de(c["principio_activo"])
+        if cat_f and cat_f not in [x.lower() for x in cats]:
+            continue
         precios = [o["precio"] for o in c["ofertas"]]
         clinicas = {o["clinica"] for o in c["ofertas"]}
         out.append({
@@ -313,6 +359,7 @@ def listar_catalogo() -> list[dict]:
             "marca": c["marca"],
             "indicacion": c["indicacion"],
             "presentacion": c["presentacion"],
+            "categorias": cats,
             "bioequivalente": _tiene_biosimilar(c),
             "n_clinicas": len(clinicas),
             "n_ofertas": len(c["ofertas"]),
@@ -322,6 +369,31 @@ def listar_catalogo() -> list[dict]:
             "ahorro_max_pct": round((max(precios) - min(precios)) / max(precios) * 100, 1),
         })
     return out
+
+
+def exportar_filas() -> list[dict]:
+    """Filas planas del snapshot actual de precios (para descarga CSV / ERP)."""
+    from datetime import date
+    hoy = date.today().isoformat()
+    filas = []
+    for c in CATALOGO:
+        cats = "; ".join(categorias_de(c["principio_activo"]))
+        for o in c["ofertas"]:
+            filas.append({
+                "fecha": hoy,
+                "categoria": cats,
+                "principio_activo": c["principio_activo"],
+                "marca": c["marca"],
+                "presentacion": c["presentacion"],
+                "clinica": o["clinica"],
+                "nombre_en_clinica": o["glosa"],
+                "empresa_isp": _empresa(o["glosa"]),
+                "tipo": "Bioequivalente" if o["bioequivalente"] else "Original",
+                "precio_particular_clp": o["precio"],
+                "moneda": "CLP",
+                "fuente": "Arancel publico (Ley 20.285)",
+            })
+    return filas
 
 
 def dashboard() -> dict:
@@ -348,8 +420,14 @@ def dashboard() -> dict:
         brechas.append(ahorro_pct)
         ahorros_clp.append(ahorro)
         barata = min(ofertas, key=lambda o: o["precio"])
+        # nombre unico por presentacion (evita confundir las 2 de daratumumab)
+        otras_pres = sum(1 for x in CATALOGO if x["principio_activo"] == c["principio_activo"])
+        nombre = c["principio_activo"].capitalize()
+        if otras_pres > 1:
+            nombre += " " + c["marca"].replace("Darzalex", "").strip().split()[0]
         por_farmaco.append({
             "principio_activo": c["principio_activo"],
+            "nombre": nombre,
             "marca": c["marca"],
             "ahorro_pct": ahorro_pct,
             "ahorro_clp": ahorro,

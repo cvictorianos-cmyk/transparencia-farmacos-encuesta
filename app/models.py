@@ -95,6 +95,7 @@ class EncuestaRespuesta(BaseModel):
     # Bloque 3 - Dolor y disposicion (escalas 1-5)
     dificultad_encontrar_precios: Optional[int] = Field(None, ge=1, le=5)
     gasto_bolsillo_mensual_clp: Optional[int] = None
+    gasto_bolsillo_rango: Optional[str] = Field(None, description="Rango de gasto mensual")
     disposicion_usar_comparador: Optional[int] = Field(None, ge=1, le=5)
 
     # Bloque 4 - Contacto opcional

@@ -7,7 +7,7 @@ from collections import Counter
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, Response, StreamingResponse
 
 from .benchmark import ejecutar_benchmark
 from .config import BASE_DIR
@@ -48,13 +48,23 @@ async def comparador_ui():
 
 
 @router.get(
-    "/catalogo",
-    summary="Lista los 10 casos de farmacos oncologicos disponibles",
+    "/categorias",
+    summary="Lista las categorias oncologicas con sus farmacos",
     tags=["comparador"],
 )
-async def get_catalogo():
-    casos = cat.listar_catalogo()
-    return {"total": len(casos), "clinicas": cat.CLINICAS, "casos": casos}
+async def get_categorias():
+    cats = cat.listar_categorias()
+    return {"total": len(cats), "categorias": cats}
+
+
+@router.get(
+    "/catalogo",
+    summary="Lista los farmacos oncologicos (opcionalmente filtrados por categoria)",
+    tags=["comparador"],
+)
+async def get_catalogo(categoria: str | None = None):
+    casos = cat.listar_catalogo(categoria=categoria)
+    return {"total": len(casos), "clinicas": cat.CLINICAS, "categoria": categoria, "casos": casos}
 
 
 @router.get(
@@ -74,8 +84,68 @@ async def get_comparar(principio_activo: str, marca: str | None = None):
     summary="Metricas agregadas para el panel Premium",
     tags=["comparador"],
 )
-async def get_dashboard():
-    return cat.dashboard()
+async def get_dashboard(email: str | None = None):
+    data = cat.dashboard()
+    alertas = db.listar_alertas(limit=1000)
+    if email:
+        alertas = [a for a in alertas if (a.get("email") or "").lower() == email.lower()]
+    data["alertas_activas"] = alertas
+    return data
+
+
+@router.get(
+    "/dashboard/export.csv",
+    summary="Descarga el historico/snapshot de precios para analisis (ERP)",
+    tags=["comparador"],
+)
+async def dashboard_export_csv():
+    from . import historial as hist
+    filas_snapshot = cat.exportar_filas()
+    # historico real recolectado (si existe)
+    hist_rows = hist._leer_csv() if hasattr(hist, "_leer_csv") else []
+    buf = io.StringIO()
+    cols = ["fecha", "categoria", "principio_activo", "marca", "presentacion",
+            "clinica", "nombre_en_clinica", "empresa_isp", "tipo",
+            "precio_particular_clp", "moneda", "fuente"]
+    w = csv.DictWriter(buf, fieldnames=cols)
+    w.writeheader()
+    for f in filas_snapshot:
+        w.writerow(f)
+    # anexar historico real (columnas distintas -> filas simples)
+    for r in hist_rows:
+        w.writerow({
+            "fecha": r.get("fecha", ""),
+            "categoria": "",
+            "principio_activo": r.get("principio_activo", ""),
+            "marca": "",
+            "presentacion": "",
+            "clinica": r.get("clinica", ""),
+            "nombre_en_clinica": r.get("glosa", ""),
+            "empresa_isp": "",
+            "tipo": "",
+            "precio_particular_clp": r.get("precio_clp", ""),
+            "moneda": "CLP",
+            "fuente": "Historico diario",
+        })
+    buf.seek(0)
+    return StreamingResponse(
+        iter([buf.getvalue()]), media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=transparencia_precios.csv"},
+    )
+
+
+@router.get(
+    "/dashboard/reporte.pdf",
+    summary="Reporte ejecutivo del panel en PDF (Premium)",
+    tags=["comparador"],
+)
+async def dashboard_reporte_pdf():
+    from . import reporte
+    pdf_bytes = reporte.generar_reporte_pdf(cat.dashboard())
+    return Response(
+        content=pdf_bytes, media_type="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=reporte_transparencia_oncologica.pdf"},
+    )
 
 
 @router.get(

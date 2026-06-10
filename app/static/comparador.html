@@ -36,6 +36,15 @@
   /* alertas premium */
   .alertbox { background:var(--orobg); border:1px solid #e8d49a; border-radius:11px;
               padding:10px 13px; margin:10px 0; font-size:.8rem; color:var(--orotxt); }
+  .cat-intro { font-size:.85rem; color:var(--gris); margin:6px 0 10px; }
+  .cat-titulo { font-size:1.1rem; color:var(--azul); margin:6px 0 12px; text-transform:capitalize; }
+  .cats { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
+  .cat { background:#fff; border:1px solid var(--linea); border-radius:14px; padding:16px 13px;
+         cursor:pointer; text-align:center; transition:.12s; }
+  .cat:hover, .cat:focus { border-color:var(--azul2); box-shadow:0 2px 10px rgba(0,0,0,.08); outline:none; }
+  .cat .ico { font-size:1.9rem; }
+  .cat .nom { font-weight:700; color:var(--azul); margin-top:6px; font-size:.95rem; }
+  .cat .cnt { font-size:.74rem; color:var(--gris); margin-top:2px; }
   .casos { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
   .caso { background:#fff; border:1px solid var(--linea); border-radius:13px; padding:13px;
           cursor:pointer; transition:.12s; text-align:left; }
@@ -202,6 +211,11 @@
   .bio-row:last-child { border-bottom:0; }
   .bio-row .pa { text-transform:capitalize; font-weight:600; }
   .bio-row .save { color:var(--ok); font-weight:800; }
+  .dash-dl { display:flex; flex-wrap:wrap; gap:10px; margin:6px 0 4px; }
+  .dash-dl .dl-btn { flex:1; min-width:200px; text-align:center; text-decoration:none;
+                     background:var(--azul); color:#fff; border-radius:10px; padding:12px;
+                     font-weight:700; font-size:.85rem; }
+  .dash-dl .dl-btn.pdf { background:var(--oro); }
   /* popup encuesta */
   .promo .modal { text-align:center; }
   .promo .regalo { font-size:2.2rem; }
@@ -306,8 +320,19 @@
       🔔 <b>Tus alertas activas:</b> 3 fármacos con baja de precio esta semana. Sin publicidad.
     </div>
 
-    <div id="casos" class="casos"></div>
-    <p id="sin-resultados" class="empty hidden">Sin resultados para tu búsqueda.</p>
+    <!-- Categorias oncologicas (primera pantalla) -->
+    <div id="vista-cats">
+      <p class="cat-intro">Elige el tipo de cáncer o área para ver sus fármacos:</p>
+      <div id="categorias" class="cats"></div>
+    </div>
+
+    <!-- Farmacos de la categoria elegida o de la busqueda -->
+    <div id="vista-drogas" class="hidden">
+      <button class="back" id="volver-cat" onclick="verCategorias()">← Volver a categorías</button>
+      <h2 id="cat-titulo" class="cat-titulo"></h2>
+      <div id="casos" class="casos"></div>
+      <p id="sin-resultados" class="empty hidden">Sin resultados para tu búsqueda.</p>
+    </div>
     <p class="disc" id="disc-lista"></p>
   </div>
 
@@ -437,14 +462,47 @@ function setPlan(p) {
   if (vc && !vc.classList.contains("hidden")) { ajustarCotizador(); pintarPremiumCotiza(); }
 }
 
+let CATEGORIAS = [];
+
 async function cargar() {
   const r = await fetch("/catalogo");
   const data = await r.json();
   CASOS = data.casos;
-  pintarLista(CASOS);
+  try { CATEGORIAS = (await (await fetch("/categorias")).json()).categorias; } catch (e) { CATEGORIAS = []; }
+  pintarCategorias();
   document.getElementById("disc-lista").textContent =
     "Compara fármacos con precios REALES del arancel particular publicado por cada clínica " +
     "(soportado por la Ley de Transparencia - Ley 20.285 en Chile).";
+}
+
+function pintarCategorias() {
+  const cont = document.getElementById("categorias");
+  cont.innerHTML = "";
+  CATEGORIAS.forEach(c => {
+    const div = document.createElement("div");
+    div.className = "cat"; div.tabIndex = 0;
+    div.innerHTML = '<div class="ico">' + (c.icono || "💊") + '</div>' +
+      '<div class="nom">' + c.categoria + '</div>' +
+      '<div class="cnt">' + c.n_farmacos + (c.n_farmacos === 1 ? ' fármaco' : ' fármacos') + '</div>';
+    const abrir = () => seleccionarCategoria(c.categoria);
+    div.onclick = abrir;
+    div.onkeydown = e => { if (e.key === "Enter") abrir(); };
+    cont.appendChild(div);
+  });
+}
+
+function seleccionarCategoria(categoria) {
+  const items = CASOS.filter(c => (c.categorias || []).includes(categoria));
+  document.getElementById("cat-titulo").textContent = categoria;
+  document.getElementById("vista-cats").classList.add("hidden");
+  document.getElementById("vista-drogas").classList.remove("hidden");
+  pintarLista(items);
+}
+
+function verCategorias() {
+  document.getElementById("q").value = "";
+  document.getElementById("vista-drogas").classList.add("hidden");
+  document.getElementById("vista-cats").classList.remove("hidden");
 }
 
 // Imagen SVG del farmaco (vial de perfusion), color propio por molecula.
@@ -490,9 +548,15 @@ function pintarLista(items) {
 
 document.getElementById("q").addEventListener("input", e => {
   const t = e.target.value.toLowerCase().trim();
+  if (!t) { verCategorias(); return; }
+  // al buscar, mostrar fármacos coincidentes en todas las categorías
+  document.getElementById("vista-cats").classList.add("hidden");
+  document.getElementById("vista-drogas").classList.remove("hidden");
+  document.getElementById("cat-titulo").textContent = "Resultados de búsqueda";
   pintarLista(CASOS.filter(c =>
     c.principio_activo.includes(t) || c.marca.toLowerCase().includes(t) ||
-    (c.indicacion || "").toLowerCase().includes(t)));
+    (c.indicacion || "").toLowerCase().includes(t) ||
+    (c.categorias || []).some(x => x.toLowerCase().includes(t))));
 });
 
 function qrFake() {
@@ -715,6 +779,26 @@ async function cargarDashboard() {
   let html = '<h2 style="color:var(--azul);margin:6px 0 2px">📊 Panel Premium</h2>' +
     '<p class="disc" style="margin:0 0 10px">Inteligencia de precios oncológicos · ' + d.fecha_datos + '</p>';
 
+  // Botones de descarga (ERP / reporte)
+  html += '<div class="dash-dl">' +
+    '<a class="dl-btn" href="/dashboard/export.csv" download>⬇️ Descargar datos (CSV para ERP)</a>' +
+    '<a class="dl-btn pdf" href="/dashboard/reporte.pdf" target="_blank">📄 Reporte ejecutivo (PDF)</a>' +
+    '</div>';
+
+  // Alertas activas
+  const al = d.alertas_activas || [];
+  html += '<div class="dash-card"><h3>🔔 Alertas activas (' + al.length + ')</h3>';
+  if (al.length) {
+    al.slice(0, 20).forEach(a => {
+      html += '<div class="bio-row"><span class="pa">' + (a.principio_activo || "") + '</span>' +
+        '<span style="font-size:.76rem;color:var(--gris)">' + (a.email || "") +
+        (a.precio_referencia_clp ? ' · ref. ' + fmt(a.precio_referencia_clp) : '') + '</span></div>';
+    });
+  } else {
+    html += '<p class="disc" style="margin:4px 0 0">Aún no hay alertas. Crea una desde "Cotiza tu tratamiento" para que te avisemos por email si baja el precio.</p>';
+  }
+  html += '</div>';
+
   // KPIs
   html += '<div class="dash-kpis">' +
     kpi(d.n_farmacos, "fármacos monitoreados", "") +
@@ -727,7 +811,7 @@ async function cargarDashboard() {
   html += '<div class="dash-card"><h3>Brecha de precio por fármaco</h3>';
   const maxPct = Math.max(...d.ranking_brecha.map(x => x.ahorro_pct), 1);
   d.ranking_brecha.forEach(x => {
-    html += '<div class="barrow"><span class="name">' + x.principio_activo + '</span>' +
+    html += '<div class="barrow"><span class="name">' + (x.nombre || x.principio_activo) + '</span>' +
       '<span class="track"><span class="fill" style="width:' + (x.ahorro_pct / maxPct * 100) + '%"></span></span>' +
       '<span class="pct">' + x.ahorro_pct + '%</span></div>';
   });
@@ -747,7 +831,7 @@ async function cargarDashboard() {
   // Mayores oportunidades (top 3)
   html += '<div class="dash-card"><h3>🔝 Mayores oportunidades de ahorro</h3>';
   d.ranking_brecha.slice(0, 3).forEach((x, i) => {
-    html += '<div class="bio-row"><span class="pa">' + (i + 1) + '. ' + x.principio_activo + '</span>' +
+    html += '<div class="bio-row"><span class="pa">' + (i + 1) + '. ' + (x.nombre || x.principio_activo) + '</span>' +
       '<span>ahorra <b>' + fmt(x.ahorro_clp) + '</b> en ' + f2(x.clinica_mas_barata) + '</span></div>';
   });
   html += '</div>';

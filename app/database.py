@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS encuestas (
     comparo_precios TEXT,
     dificultad_encontrar_precios INTEGER,
     gasto_bolsillo_mensual_clp INTEGER,
+    gasto_bolsillo_rango TEXT,
     disposicion_usar_comparador INTEGER,
     email TEXT,
     consentimiento INTEGER DEFAULT 0,
@@ -129,7 +130,8 @@ def init_db() -> None:
     with get_conn() as conn:
         conn.executescript(SCHEMA)
         # migracion suave: columnas nuevas en BDs ya creadas
-        for col in ("isapre TEXT", "nombre TEXT", "apellido TEXT", "precio_pagado_rango TEXT"):
+        for col in ("isapre TEXT", "nombre TEXT", "apellido TEXT",
+                    "precio_pagado_rango TEXT", "gasto_bolsillo_rango TEXT"):
             try:
                 conn.execute(f"ALTER TABLE encuestas ADD COLUMN {col}")
             except sqlite3.OperationalError:
@@ -249,7 +251,7 @@ def listar_benchmarks(limit: int = 50) -> list[dict]:
 _ENCUESTA_COLS = (
     "rol", "rango_edad", "region", "comuna", "prevision", "isapre", "nombre", "apellido",
     "farmaco_oncologico", "precio_pagado_clp", "precio_pagado_rango", "lugar_compra", "comparo_precios",
-    "dificultad_encontrar_precios", "gasto_bolsillo_mensual_clp",
+    "dificultad_encontrar_precios", "gasto_bolsillo_mensual_clp", "gasto_bolsillo_rango",
     "disposicion_usar_comparador", "email", "consentimiento", "comentario",
     "user_agent", "ip_hash",
 )
