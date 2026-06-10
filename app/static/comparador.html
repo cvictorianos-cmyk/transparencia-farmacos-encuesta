@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TransparenciaRx · Comparador de Fármacos Oncológicos</title>
+<title>Transparencia Oncológica Clínica · Comparador de Fármacos</title>
 <style>
   :root { --azul:#1F3A5F; --azul2:#2E5A88; --bg:#f4f6f9; --gris:#5b6470;
           --ok:#1b8a5a; --okbg:#e6f4ec; --alerta:#b35900; --linea:#e2e7ee;
@@ -143,6 +143,49 @@
                   font-size:.8rem; margin-top:8px; }
   .chart-lock { background:#fafbfc; border:1px dashed #cdd5df; border-radius:12px; padding:18px;
                 text-align:center; color:var(--gris); font-size:.82rem; margin:12px 0; }
+  /* nav superior */
+  .nav { display:flex; gap:8px; justify-content:center; background:var(--azul);
+         padding:0 10px 14px; }
+  .nav button { background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.35);
+                color:#fff; border-radius:999px; padding:8px 16px; font-size:.82rem;
+                font-weight:700; cursor:pointer; }
+  .nav button.act { background:#fff; color:var(--azul); border-color:#fff; }
+  /* cotizador */
+  .cotiza-form { background:#fff; border-radius:14px; padding:18px 16px; margin-top:14px;
+                 box-shadow:0 1px 4px rgba(0,0,0,.08); }
+  .cotiza-form h2 { margin:0 0 4px; color:var(--azul); font-size:1.05rem; }
+  .cotiza-form .sub { font-size:.78rem; color:var(--gris); margin:0 0 12px; }
+  .cotiza-form label { display:block; font-size:.82rem; font-weight:600; margin:10px 0 4px; }
+  .cotiza-form select, .cotiza-form input { width:100%; padding:11px 12px; border:1px solid #cdd5df;
+                 border-radius:9px; font-size:16px; background:#fff; }
+  .cotiza-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .btn-calc { width:100%; margin-top:16px; background:var(--azul); color:#fff; border:0;
+              border-radius:11px; padding:13px; font-size:.95rem; font-weight:800; cursor:pointer; }
+  .cot-res { margin-top:14px; }
+  .cot-total { background:var(--okbg); border-radius:10px; padding:12px 14px; margin:10px 0;
+               font-size:.88rem; color:#14613f; }
+  .cot-total b { font-size:1.1rem; }
+  .prem-tools { background:var(--orobg); border:1px solid #e8d49a; border-radius:11px;
+                padding:13px 14px; margin-top:12px; }
+  .prem-tools h4 { margin:0 0 8px; font-size:.82rem; color:var(--orotxt); }
+  .prem-tools input { margin-bottom:8px; }
+  .btn-oro { width:100%; background:var(--oro); color:#fff; border:0; border-radius:9px;
+             padding:11px; font-weight:800; cursor:pointer; margin-top:4px; }
+  .guardadas { margin-top:10px; }
+  .guardada { display:flex; justify-content:space-between; align-items:center; gap:8px;
+              background:#fff; border:1px solid var(--linea); border-radius:9px;
+              padding:8px 11px; margin-top:6px; font-size:.78rem; }
+  .guardada button { background:var(--azul2); color:#fff; border:0; border-radius:7px;
+                     padding:5px 10px; font-size:.72rem; font-weight:700; cursor:pointer; }
+  .ok-msg { color:var(--ok); font-size:.8rem; margin-top:6px; }
+  /* popup encuesta */
+  .promo .modal { text-align:center; }
+  .promo .regalo { font-size:2.2rem; }
+  .promo .dias { background:var(--okbg); color:#14613f; border-radius:10px; padding:9px 12px;
+                 font-size:.85rem; margin:10px 0; }
+  .promo .btn-enc { display:block; width:100%; background:var(--ok); color:#fff; border:0;
+                    border-radius:10px; padding:13px; font-weight:800; font-size:.95rem;
+                    cursor:pointer; text-decoration:none; }
 
   /* ===== VERSION ESCRITORIO (>=1024px): misma URL, usa el ancho completo ===== */
   @media (min-width: 1024px) {
@@ -176,10 +219,28 @@
 <body>
 <header>
   <button id="login-btn" class="login-btn" onclick="abrirLogin()">🔐 Premium · Iniciar sesión</button>
-  <h1>TransparenciaRx</h1>
-  <p>Comparador de fármacos oncológicos · Clínicas de Chile · Proyecto de Título MSIIN</p>
+  <h1>Transparencia Oncológica Clínica</h1>
+  <p>Comparador de fármacos oncológicos · Clínicas de Chile</p>
   <span id="plan-badge" class="plan-badge free">VERSIÓN GRATUITA</span>
 </header>
+
+<nav class="nav">
+  <button id="nav-comp" class="act" onclick="verSeccion('comp')">Comparador</button>
+  <button id="nav-cotiza" onclick="verSeccion('cotiza')">💊 Cotiza tu tratamiento</button>
+</nav>
+
+<!-- Popup encuesta: 7 dias Premium gratis -->
+<div id="modal-encuesta" class="modal-bg promo hidden">
+  <div class="modal">
+    <div class="regalo">🎁</div>
+    <h3>Encuesta Oncológica</h3>
+    <p>Ayúdanos a mejorar la transparencia de precios respondiendo nuestra encuesta (2 minutos).</p>
+    <div class="dias">⭐ Al completarla obtienes <b>7 días gratis de la versión Premium</b>:
+      todas las clínicas, evolución de precios y alertas.</div>
+    <a class="btn-enc" href="/encuesta" target="_blank" onclick="cerrarPromo()">Responder la encuesta</a>
+    <button class="btn-cancel" onclick="cerrarPromo()">Ahora no</button>
+  </div>
+</div>
 
 <!-- Modal de login Premium -->
 <div id="modal-login" class="modal-bg hidden">
@@ -225,9 +286,39 @@
     <div id="det" class="det"></div>
   </div>
 
+  <!-- Vista cotizador -->
+  <div id="vista-cotiza" class="hidden">
+    <div class="cotiza-form">
+      <h2>💊 Cotiza tu tratamiento</h2>
+      <p class="sub">Ingresa la indicación de tu médico y calcula el costo total en cada clínica.</p>
+
+      <label>Fármaco indicado</label>
+      <select id="cz-pa"></select>
+
+      <label>Dosis por administración (mg)</label>
+      <input id="cz-dosis" type="number" min="1" inputmode="numeric" placeholder="Ej: 400">
+
+      <div class="cotiza-grid">
+        <div>
+          <label>N° de administraciones</label>
+          <input id="cz-veces" type="number" min="1" inputmode="numeric" placeholder="Ej: 6">
+        </div>
+        <div>
+          <label>Cobertura isapre (%) <span style="font-weight:400;color:var(--gris)">(opcional)</span></label>
+          <input id="cz-cob" type="number" min="0" max="100" inputmode="numeric" placeholder="Ej: 50">
+        </div>
+      </div>
+
+      <button class="btn-calc" onclick="calcularCotizacion()">Calcular costo del tratamiento</button>
+      <div id="cz-res" class="cot-res"></div>
+      <div id="cz-prem"></div>
+    </div>
+  </div>
+
   <footer>
-    Datos: aranceles públicos de cada clínica (precios reales, jun-2026) · fines académicos ·
-    <a href="/encuesta">Responder la encuesta</a> · <a href="/docs">API</a>
+    Datos: aranceles públicos de cada clínica (precios reales, soportado por la Ley de
+    Transparencia - Ley 20.285 en Chile) ·
+    <a href="/encuesta">Responder la encuesta oncológica</a>
   </footer>
 </div>
 
@@ -280,6 +371,8 @@ function setPlan(p) {
   if (PA_ACTUAL && !document.getElementById("vista-det").classList.contains("hidden")) {
     detalle(PA_ACTUAL); // repintar detalle con el nuevo plan
   }
+  const vc = document.getElementById("vista-cotiza");
+  if (vc && !vc.classList.contains("hidden")) pintarPremiumCotiza();
 }
 
 async function cargar() {
@@ -288,9 +381,8 @@ async function cargar() {
   CASOS = data.casos;
   pintarLista(CASOS);
   document.getElementById("disc-lista").textContent =
-    "Compara " + CASOS.length + " fármacos con precios REALES del arancel particular de " +
-    data.clinicas.length + " clínicas (INDISA, Dávila, U. Andes, Hospital Clínico UC y San Carlos). " +
-    "Santa María y Alemana no publican estos precios.";
+    "Compara fármacos con precios REALES del arancel particular publicado por cada clínica " +
+    "(soportado por la Ley de Transparencia - Ley 20.285 en Chile).";
 }
 
 // Imagen SVG del farmaco (vial de perfusion), color propio por molecula.
@@ -548,6 +640,153 @@ function volver() {
   PA_ACTUAL = null;
   document.getElementById("vista-det").classList.add("hidden");
   document.getElementById("vista-lista").classList.remove("hidden");
+}
+
+// === Navegacion superior ===
+function verSeccion(s) {
+  document.getElementById("nav-comp").className = s === "comp" ? "act" : "";
+  document.getElementById("nav-cotiza").className = s === "cotiza" ? "act" : "";
+  document.getElementById("vista-cotiza").classList.toggle("hidden", s !== "cotiza");
+  if (s === "cotiza") {
+    document.getElementById("vista-lista").classList.add("hidden");
+    document.getElementById("vista-det").classList.add("hidden");
+    poblarSelectFarmacos();
+    pintarGuardadas();
+  } else {
+    volver();
+  }
+}
+
+// === Cotizador de tratamiento ===
+function poblarSelectFarmacos() {
+  const sel = document.getElementById("cz-pa");
+  if (sel.options.length > 1) return;
+  sel.innerHTML = '<option value="">Selecciona el fármaco…</option>';
+  const vistos = new Set();
+  CASOS.forEach(c => {
+    if (vistos.has(c.principio_activo)) return;
+    vistos.add(c.principio_activo);
+    const o = document.createElement("option");
+    o.value = c.principio_activo;
+    o.textContent = c.principio_activo.charAt(0).toUpperCase() + c.principio_activo.slice(1) + " (" + c.marca.split(" ")[0] + ")";
+    sel.appendChild(o);
+  });
+}
+
+let COTIZACION_ACTUAL = null;
+
+async function calcularCotizacion() {
+  const pa = document.getElementById("cz-pa").value;
+  const dosis = Number(document.getElementById("cz-dosis").value);
+  const veces = Number(document.getElementById("cz-veces").value);
+  const cob = Number(document.getElementById("cz-cob").value) || 0;
+  const res = document.getElementById("cz-res");
+  if (!pa || !dosis || !veces) {
+    res.innerHTML = '<p class="disc">Completa fármaco, dosis y número de administraciones.</p>';
+    return;
+  }
+  res.innerHTML = '<p class="disc">Calculando…</p>';
+  const r = await fetch("/cotizar/" + encodeURIComponent(pa) + "?dosis_mg=" + dosis +
+                        "&veces=" + veces + "&cobertura_pct=" + cob);
+  if (!r.ok) { res.innerHTML = '<p class="disc">No se pudo cotizar este fármaco.</p>'; return; }
+  const d = await r.json();
+  COTIZACION_ACTUAL = {pa, dosis, veces, cob, fecha: new Date().toISOString().slice(0,10),
+                       mejor: d.opcion_mas_barata};
+  let html = '<div class="cot-total">Tratamiento más conveniente: <b>' +
+    fmt(d.opcion_mas_barata.costo_total_clp) + '</b> en ' + f2(d.opcion_mas_barata.clinica) +
+    (cob ? ' (copago estimado con ' + cob + '% de cobertura: <b>' +
+      fmt(Math.round(d.opcion_mas_barata.costo_total_clp * (1 - cob/100))) + '</b>)' : '') +
+    '. Eligiendo bien ahorras hasta <b>' + fmt(d.ahorro_total_clp) + '</b>.</div>';
+  html += '<div class="tw"><table><thead><tr><th>Clínica</th><th>Nombre en la clínica</th>' +
+    '<th style="text-align:right">Viales/dosis</th><th style="text-align:right">Costo total</th>' +
+    (cob ? '<th style="text-align:right">Copago est.</th>' : '') +
+    '</tr></thead><tbody>';
+  d.opciones.forEach((o, i) => {
+    html += '<tr class="' + (i === 0 ? "menor" : "") + '">' +
+      '<td class="clinica">' + f2(o.clinica) + '</td>' +
+      '<td class="glosa">' + o.glosa + (o.bioequivalente && PLAN === "prem" ? ' <span class="tipo bio">Bioeq.</span>' : '') + '</td>' +
+      '<td class="precio">' + o.viales_por_dosis + ' × ' + o.mg_por_vial + 'mg</td>' +
+      '<td class="precio">' + fmt(o.costo_total_clp) + '</td>' +
+      (cob ? '<td class="precio">' + fmt(o.copago_estimado_clp) + '</td>' : '') +
+      '</tr>';
+  });
+  html += '</tbody></table></div><p class="disc">' + d.disclaimer + '</p>';
+  res.innerHTML = html;
+  pintarPremiumCotiza();
+}
+
+function pintarPremiumCotiza() {
+  const box = document.getElementById("cz-prem");
+  if (PLAN !== "prem") {
+    box.innerHTML = '<div class="chart-lock">⭐ <b>Con Premium:</b> guarda esta búsqueda para repetirla ' +
+      'cuando quieras y activa una <b>alerta por email</b> si el precio de tu tratamiento baja.</div>';
+    return;
+  }
+  box.innerHTML = '<div class="prem-tools"><h4>⭐ Herramientas Premium</h4>' +
+    '<button class="btn-oro" onclick="guardarBusqueda()">💾 Guardar esta búsqueda</button>' +
+    '<label style="margin-top:10px">Email para alerta de baja de precio</label>' +
+    '<input id="cz-mail" type="email" placeholder="tucorreo@ejemplo.cl">' +
+    '<button class="btn-oro" onclick="activarAlerta()">🔔 Avisarme si baja el precio</button>' +
+    '<p id="cz-msg" class="ok-msg"></p>' +
+    '<div class="guardadas" id="cz-guardadas"></div></div>';
+  pintarGuardadas();
+}
+
+function guardarBusqueda() {
+  if (!COTIZACION_ACTUAL) return;
+  const lista = JSON.parse(localStorage.getItem("cotizaciones") || "[]");
+  lista.unshift(COTIZACION_ACTUAL);
+  localStorage.setItem("cotizaciones", JSON.stringify(lista.slice(0, 10)));
+  document.getElementById("cz-msg").textContent = "Búsqueda guardada.";
+  pintarGuardadas();
+}
+
+function pintarGuardadas() {
+  const cont = document.getElementById("cz-guardadas");
+  if (!cont || PLAN !== "prem") return;
+  const lista = JSON.parse(localStorage.getItem("cotizaciones") || "[]");
+  cont.innerHTML = lista.length ? "<h4 style='margin:10px 0 2px;font-size:.78rem;color:var(--orotxt)'>Búsquedas guardadas</h4>" : "";
+  lista.forEach((g, i) => {
+    const div = document.createElement("div");
+    div.className = "guardada";
+    div.innerHTML = '<span><b style="text-transform:capitalize">' + g.pa + '</b> · ' + g.dosis +
+      'mg × ' + g.veces + (g.cob ? ' · ' + g.cob + '%' : '') + ' · ' + g.fecha + '</span>';
+    const btn = document.createElement("button");
+    btn.textContent = "Repetir";
+    btn.onclick = () => {
+      document.getElementById("cz-pa").value = g.pa;
+      document.getElementById("cz-dosis").value = g.dosis;
+      document.getElementById("cz-veces").value = g.veces;
+      document.getElementById("cz-cob").value = g.cob || "";
+      calcularCotizacion();
+    };
+    div.appendChild(btn);
+    cont.appendChild(div);
+  });
+}
+
+async function activarAlerta() {
+  const email = (document.getElementById("cz-mail").value || "").trim();
+  const msg = document.getElementById("cz-msg");
+  if (!COTIZACION_ACTUAL) { msg.textContent = "Primero calcula una cotización."; return; }
+  if (!email || !email.includes("@")) { msg.textContent = "Ingresa un email válido."; return; }
+  const r = await fetch("/alertas", {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      email, principio_activo: COTIZACION_ACTUAL.pa, dosis_mg: COTIZACION_ACTUAL.dosis,
+      veces: COTIZACION_ACTUAL.veces, cobertura_pct: COTIZACION_ACTUAL.cob,
+      precio_referencia_clp: COTIZACION_ACTUAL.mejor.costo_total_clp
+    })
+  });
+  msg.textContent = r.ok ? "🔔 Alerta activada: te avisaremos por email si baja el precio."
+                         : "No se pudo activar la alerta.";
+}
+
+// === Popup encuesta (una vez por sesion) ===
+function cerrarPromo() { document.getElementById("modal-encuesta").classList.add("hidden"); }
+if (!sessionStorage.getItem("promo_encuesta")) {
+  sessionStorage.setItem("promo_encuesta", "1");
+  setTimeout(() => document.getElementById("modal-encuesta").classList.remove("hidden"), 1800);
 }
 
 cargar();

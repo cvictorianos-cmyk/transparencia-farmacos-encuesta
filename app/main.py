@@ -45,8 +45,9 @@ async def _startup():
 AUTH_USER = os.environ.get("AUTH_USER", "carlos")
 AUTH_PASS = os.environ.get("AUTH_PASS", "Transparencia2026")
 
-# Rutas publicas: /health (healthcheck de Render) y /encuesta (QR del censo del AFE).
-_RUTAS_PUBLICAS = ("/health", "/encuesta")
+# Rutas publicas: /health (healthcheck de Render), /encuesta (QR del censo)
+# y /premium/login (valida sus propias credenciales).
+_RUTAS_PUBLICAS = ("/health", "/encuesta", "/premium/login")
 
 
 @app.middleware("http")

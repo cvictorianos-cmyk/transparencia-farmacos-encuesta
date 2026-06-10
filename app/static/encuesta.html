@@ -49,7 +49,7 @@
 <body>
 <header>
   <h1>Censo de Transparencia de Precios</h1>
-  <p>Fármacos oncológicos en Chile · Proyecto de Título MSIIN</p>
+  <p>Fármacos oncológicos en Chile</p>
 </header>
 
 <div class="wrap">
@@ -57,7 +57,7 @@
     <!-- Bloque 1 -->
     <div class="card">
       <h2>1 · Sobre ti</h2>
-      <p class="hint">Tus respuestas son anónimas y se usan solo con fines académicos.</p>
+      <p class="hint">Tus respuestas son anónimas y confidenciales.</p>
 
       <label>¿Quién responde?</label>
       <div class="chips">
@@ -74,10 +74,14 @@
       </select>
 
       <label>Región <span class="opt">(opcional)</span></label>
-      <input type="text" name="region" placeholder="Ej: Metropolitana">
+      <select name="region" id="sel-region">
+        <option value="">Selecciona…</option>
+      </select>
 
       <label>Comuna <span class="opt">(opcional)</span></label>
-      <input type="text" name="comuna" placeholder="Ej: Providencia">
+      <select name="comuna" id="sel-comuna" disabled>
+        <option value="">Selecciona primero la región…</option>
+      </select>
 
       <label>Previsión de salud</label>
       <div class="chips">
@@ -85,6 +89,21 @@
         <input type="radio" id="p2" name="prevision" value="isapre"><label for="p2">Isapre</label>
         <input type="radio" id="p3" name="prevision" value="particular"><label for="p3">Particular</label>
         <input type="radio" id="p4" name="prevision" value="otro"><label for="p4">Otro</label>
+      </div>
+
+      <div id="isapre-box" style="display:none">
+        <label>¿Cuál isapre?</label>
+        <select name="isapre">
+          <option value="">Selecciona…</option>
+          <option>Banmédica</option>
+          <option>Colmena</option>
+          <option>Consalud</option>
+          <option>Cruz Blanca</option>
+          <option>Esencial</option>
+          <option>Nueva Masvida</option>
+          <option>Vida Tres</option>
+          <option>Otra</option>
+        </select>
       </div>
     </div>
 
@@ -132,7 +151,7 @@
       <label>Gasto de bolsillo mensual en el tratamiento (CLP) <span class="opt">(opcional)</span></label>
       <input type="number" name="gasto_bolsillo_mensual_clp" inputmode="numeric" placeholder="Ej: 800000" min="0">
 
-      <label>¿Usarías un comparador de precios como el de este proyecto?</label>
+      <label>¿Usarías un comparador de precios para tu próximo tratamiento?</label>
       <div class="scale">
         <input type="radio" id="u1" name="disposicion_usar_comparador" value="1"><label for="u1">1</label>
         <input type="radio" id="u2" name="disposicion_usar_comparador" value="2"><label for="u2">2</label>
@@ -148,6 +167,12 @@
       <h2>4 · Contacto <span class="opt" style="font-weight:400">(opcional)</span></h2>
       <p class="hint">Solo si quieres que te contactemos para validar la solución.</p>
 
+      <label>Nombre <span class="opt">(opcional)</span></label>
+      <input type="text" name="nombre" placeholder="Ej: María" autocomplete="given-name">
+
+      <label>Apellido <span class="opt">(opcional)</span></label>
+      <input type="text" name="apellido" placeholder="Ej: González" autocomplete="family-name">
+
       <label>Email <span class="opt">(opcional)</span></label>
       <input type="email" name="email" placeholder="tucorreo@ejemplo.cl">
 
@@ -156,7 +181,7 @@
 
       <div class="consent">
         <input type="checkbox" id="cons" name="consentimiento" value="true">
-        <label for="cons" style="margin:0;font-weight:400">Autorizo que mi email se use para contacto de validación de este proyecto académico.</label>
+        <label for="cons" style="margin:0;font-weight:400">Autorizo que mi email se use para contacto de validación o futuras noticias.</label>
       </div>
     </div>
 
@@ -170,13 +195,54 @@
     <p>Tu aporte ayuda a construir más transparencia en los precios de fármacos oncológicos en Chile.</p>
   </div>
 
-  <footer>Proyecto de Título · Magíster en Sistemas de Información de Inteligencia de Negocios (MSIIN)</footer>
+  <footer>Transparencia Oncológica Clínica · Chile</footer>
 </div>
 
 <script>
 const form = document.getElementById('f');
 const btn = document.getElementById('btn');
 const errBox = document.getElementById('err');
+
+// === Regiones y comunas de Chile (principales) ===
+const COMUNAS = {
+ "Arica y Parinacota":["Arica","Camarones","Putre","General Lagos"],
+ "Tarapacá":["Iquique","Alto Hospicio","Pozo Almonte","Pica","Huara"],
+ "Antofagasta":["Antofagasta","Calama","Tocopilla","Mejillones","Taltal","San Pedro de Atacama"],
+ "Atacama":["Copiapó","Vallenar","Caldera","Chañaral","Tierra Amarilla","Huasco"],
+ "Coquimbo":["La Serena","Coquimbo","Ovalle","Illapel","Vicuña","Los Vilos","Andacollo"],
+ "Valparaíso":["Valparaíso","Viña del Mar","Quilpué","Villa Alemana","Concón","San Antonio","Quillota","Los Andes","San Felipe","La Calera","Limache","Casablanca"],
+ "Metropolitana":["Santiago","Providencia","Las Condes","Vitacura","Lo Barnechea","Ñuñoa","La Reina","Macul","Peñalolén","La Florida","Puente Alto","San Bernardo","Maipú","Pudahuel","Cerrillos","Estación Central","Quinta Normal","Recoleta","Independencia","Conchalí","Huechuraba","Quilicura","Renca","Lo Prado","Cerro Navia","San Miguel","San Joaquín","La Granja","La Cisterna","El Bosque","Pedro Aguirre Cerda","Lo Espejo","San Ramón","La Pintana","Colina","Lampa","Talagante","Peñaflor","Melipilla","Buin","Paine"],
+ "O'Higgins":["Rancagua","Machalí","San Fernando","Rengo","Santa Cruz","San Vicente","Pichilemu","Graneros"],
+ "Maule":["Talca","Curicó","Linares","Constitución","Cauquenes","Molina","San Javier","Parral"],
+ "Ñuble":["Chillán","Chillán Viejo","San Carlos","Bulnes","Quirihue","Yungay","Coihueco"],
+ "Biobío":["Concepción","Talcahuano","San Pedro de la Paz","Hualpén","Chiguayante","Coronel","Lota","Los Ángeles","Tomé","Penco","Cabrero","Mulchén"],
+ "La Araucanía":["Temuco","Padre Las Casas","Villarrica","Pucón","Angol","Victoria","Lautaro","Nueva Imperial"],
+ "Los Ríos":["Valdivia","La Unión","Río Bueno","Panguipulli","Paillaco","Los Lagos"],
+ "Los Lagos":["Puerto Montt","Puerto Varas","Osorno","Castro","Ancud","Quellón","Llanquihue","Frutillar","Calbuco"],
+ "Aysén":["Coyhaique","Puerto Aysén","Chile Chico","Cochrane"],
+ "Magallanes":["Punta Arenas","Puerto Natales","Porvenir","Cabo de Hornos"]
+};
+const selRegion = document.getElementById('sel-region');
+const selComuna = document.getElementById('sel-comuna');
+Object.keys(COMUNAS).forEach(r => {
+  const o = document.createElement('option'); o.textContent = r; selRegion.appendChild(o);
+});
+selRegion.addEventListener('change', () => {
+  selComuna.innerHTML = '<option value="">Selecciona…</option>';
+  const lista = COMUNAS[selRegion.value] || [];
+  lista.forEach(c => { const o = document.createElement('option'); o.textContent = c; selComuna.appendChild(o); });
+  selComuna.disabled = !lista.length;
+});
+
+// === Mostrar isapres solo si la prevision es Isapre ===
+const isapreBox = document.getElementById('isapre-box');
+document.querySelectorAll('input[name=prevision]').forEach(r => {
+  r.addEventListener('change', () => {
+    const esIsapre = form.prevision.value === 'isapre';
+    isapreBox.style.display = esIsapre ? 'block' : 'none';
+    if (!esIsapre) form.isapre.value = '';
+  });
+});
 
 form.addEventListener('submit', async (e) => {
   e.preventDefault();

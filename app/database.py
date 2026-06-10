@@ -60,6 +60,9 @@ CREATE TABLE IF NOT EXISTS encuestas (
     region TEXT,
     comuna TEXT,
     prevision TEXT,
+    isapre TEXT,
+    nombre TEXT,
+    apellido TEXT,
     farmaco_oncologico TEXT,
     precio_pagado_clp INTEGER,
     lugar_compra TEXT,
@@ -75,6 +78,18 @@ CREATE TABLE IF NOT EXISTS encuestas (
 );
 
 CREATE INDEX IF NOT EXISTS idx_encuestas_fecha ON encuestas(fecha_envio);
+
+CREATE TABLE IF NOT EXISTS alertas_precio (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fecha_creacion TEXT NOT NULL,
+    email TEXT NOT NULL,
+    principio_activo TEXT NOT NULL,
+    dosis_mg REAL,
+    veces INTEGER,
+    cobertura_pct REAL,
+    precio_referencia_clp INTEGER,
+    activa INTEGER DEFAULT 1
+);
 """
 
 
@@ -97,6 +112,12 @@ def get_conn():
 def init_db() -> None:
     with get_conn() as conn:
         conn.executescript(SCHEMA)
+        # migracion suave: columnas nuevas en BDs ya creadas
+        for col in ("isapre TEXT", "nombre TEXT", "apellido TEXT"):
+            try:
+                conn.execute(f"ALTER TABLE encuestas ADD COLUMN {col}")
+            except sqlite3.OperationalError:
+                pass  # ya existe
 
 
 def crear_benchmark(principio_activo: str) -> int:
@@ -210,7 +231,7 @@ def listar_benchmarks(limit: int = 50) -> list[dict]:
 # === Encuesta / censo de validacion ===
 
 _ENCUESTA_COLS = (
-    "rol", "rango_edad", "region", "comuna", "prevision",
+    "rol", "rango_edad", "region", "comuna", "prevision", "isapre", "nombre", "apellido",
     "farmaco_oncologico", "precio_pagado_clp", "lugar_compra", "comparo_precios",
     "dificultad_encontrar_precios", "gasto_bolsillo_mensual_clp",
     "disposicion_usar_comparador", "email", "consentimiento", "comentario",
@@ -247,3 +268,29 @@ def listar_encuestas(limit: int = 1000) -> list[dict]:
 def contar_encuestas() -> int:
     with get_conn() as conn:
         return conn.execute("SELECT COUNT(*) FROM encuestas").fetchone()[0]
+
+
+# === Alertas de baja de precio (version Premium) ===
+
+def guardar_alerta(data: dict) -> int:
+    init_db()
+    with get_conn() as conn:
+        cur = conn.execute(
+            """INSERT INTO alertas_precio
+               (fecha_creacion, email, principio_activo, dosis_mg, veces,
+                cobertura_pct, precio_referencia_clp)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (datetime.utcnow().isoformat(), data.get("email"),
+             data.get("principio_activo"), data.get("dosis_mg"),
+             data.get("veces"), data.get("cobertura_pct"),
+             data.get("precio_referencia_clp")),
+        )
+        return cur.lastrowid
+
+
+def listar_alertas(limit: int = 1000) -> list[dict]:
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM alertas_precio WHERE activa=1 ORDER BY id DESC LIMIT ?", (limit,)
+        ).fetchall()
+        return [dict(r) for r in rows]

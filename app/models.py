@@ -83,6 +83,7 @@ class EncuestaRespuesta(BaseModel):
     region: Optional[str] = None
     comuna: Optional[str] = None
     prevision: Optional[str] = Field(None, description="fonasa | isapre | particular | otro")
+    isapre: Optional[str] = Field(None, description="Nombre de la isapre si prevision=isapre")
 
     # Bloque 2 - Experiencia de precios
     farmaco_oncologico: Optional[str] = Field(None, description="Principio activo o marca usada")
@@ -96,8 +97,10 @@ class EncuestaRespuesta(BaseModel):
     disposicion_usar_comparador: Optional[int] = Field(None, ge=1, le=5)
 
     # Bloque 4 - Contacto opcional
+    nombre: Optional[str] = None
+    apellido: Optional[str] = None
     email: Optional[str] = None
-    consentimiento: Optional[bool] = Field(False, description="Acepta ser contactado para validacion")
+    consentimiento: Optional[bool] = Field(False, description="Acepta ser contactado para validacion o noticias")
 
     # Comentario libre
     comentario: Optional[str] = None

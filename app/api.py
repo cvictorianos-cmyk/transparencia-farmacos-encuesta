@@ -83,6 +83,44 @@ async def get_historial(principio_activo: str):
 
 
 @router.get(
+    "/cotizar/{principio_activo}",
+    summary="Cotiza el costo total de un tratamiento por clinica",
+    tags=["cotizador"],
+)
+async def get_cotizar(principio_activo: str, dosis_mg: float, veces: int,
+                      cobertura_pct: float = 0.0):
+    data = cat.cotizar(principio_activo, dosis_mg, veces, cobertura_pct)
+    if not data:
+        raise HTTPException(404, f"No se pudo cotizar '{principio_activo}'")
+    return data
+
+
+@router.post(
+    "/alertas",
+    summary="Registra una alerta de baja de precio (Premium)",
+    tags=["cotizador"],
+)
+async def post_alerta(request: Request):
+    body = await request.json()
+    email = (body.get("email") or "").strip()
+    pa = (body.get("principio_activo") or "").strip()
+    if not email or "@" not in email or not pa:
+        raise HTTPException(400, "Se requiere email valido y principio activo")
+    alerta_id = db.guardar_alerta(body)
+    return {"ok": True, "id": alerta_id,
+            "mensaje": "Alerta registrada: te avisaremos por email si baja el precio."}
+
+
+@router.get(
+    "/alertas",
+    summary="Lista las alertas de precio activas",
+    tags=["cotizador"],
+)
+async def get_alertas(limit: int = 1000):
+    return {"alertas": db.listar_alertas(limit=limit)}
+
+
+@router.get(
     "/bioequivalentes/{principio_activo}",
     summary="Lista productos del ISP para un principio activo (sin guardar)",
 )

@@ -25,6 +25,7 @@ cotizacion formal.
 """
 from __future__ import annotations
 
+import re
 from statistics import mean
 
 CLINICAS = [
@@ -232,6 +233,71 @@ def _slug(s: str) -> str:
     return s.strip().lower()
 
 
+def _vial_mg(presentacion: str) -> float | None:
+    """Extrae los mg por vial desde la presentacion (ej: 'Vial 400 mg/20 mL')."""
+    m = re.search(r"([\d.]+)\s*mg", presentacion or "", re.I)
+    return float(m.group(1)) if m else None
+
+
+def cotizar(principio_activo: str, dosis_mg: float, veces: int,
+            cobertura_pct: float = 0.0) -> dict | None:
+    """Costo total de un tratamiento por clinica.
+
+    dosis_mg      : dosis indicada por el medico para cada administracion
+    veces         : numero de administraciones (ciclos) del tratamiento
+    cobertura_pct : % de cobertura de la isapre/seguro (0 si no se conoce)
+    """
+    pa = _slug(principio_activo)
+    casos = [c for c in CATALOGO if _slug(c["principio_activo"]) == pa]
+    if not casos or dosis_mg <= 0 or veces <= 0:
+        return None
+    cobertura_pct = max(0.0, min(100.0, cobertura_pct or 0.0))
+
+    import math
+    opciones = []
+    for c in casos:
+        mg = _vial_mg(c["presentacion"])
+        if not mg:
+            continue
+        viales = math.ceil(dosis_mg / mg)
+        for o in c["ofertas"]:
+            costo_dosis = viales * o["precio"]
+            costo_total = costo_dosis * veces
+            copago = round(costo_total * (1 - cobertura_pct / 100))
+            opciones.append({
+                "clinica": o["clinica"],
+                "glosa": o["glosa"],
+                "presentacion": c["presentacion"],
+                "marca": c["marca"],
+                "bioequivalente": o["bioequivalente"],
+                "mg_por_vial": mg,
+                "viales_por_dosis": viales,
+                "precio_vial_clp": o["precio"],
+                "costo_por_dosis_clp": costo_dosis,
+                "costo_total_clp": costo_total,
+                "copago_estimado_clp": copago,
+            })
+    if not opciones:
+        return None
+    opciones.sort(key=lambda x: x["costo_total_clp"])
+    mas_barata, mas_cara = opciones[0], opciones[-1]
+    return {
+        "principio_activo": pa,
+        "dosis_mg": dosis_mg,
+        "veces": veces,
+        "cobertura_pct": cobertura_pct,
+        "opciones": opciones,
+        "ahorro_total_clp": mas_cara["costo_total_clp"] - mas_barata["costo_total_clp"],
+        "opcion_mas_barata": {"clinica": mas_barata["clinica"], "costo_total_clp": mas_barata["costo_total_clp"]},
+        "disclaimer": (
+            "Calculo referencial: viales completos necesarios por dosis x numero de "
+            "administraciones, segun el arancel particular publicado por cada clinica "
+            "(Ley de Transparencia - Ley 20.285). No incluye honorarios de administracion, "
+            "insumos ni dia cama. No constituye una cotizacion formal."
+        ),
+    }
+
+
 def _tiene_biosimilar(caso: dict) -> bool:
     return any(o["bioequivalente"] for o in caso["ofertas"])
 
@@ -328,11 +394,11 @@ def comparar(principio_activo: str, marca: str | None = None) -> dict | None:
         "n_presentaciones": len(presentaciones),
         "presentaciones": presentaciones,
         "disclaimer": (
-            "Precios REALES del arancel particular publicado por cada clinica (" + FECHA_DATOS +
-            "). 'Nombre en la clinica' es la glosa exacta del arancel. Solo en Premium: 'Empresa (ISP)', "
-            "titular del registro sanitario segun registrosanitario.ispch.gob.cl, y 'Tipo', que indica "
-            "si es el medicamento original (marca innovadora) o un bioequivalente/biosimilar. Clinica "
-            "Santa Maria y Clinica Alemana no publican el valor particular de estos farmacos. Fines "
-            "academicos (Proyecto de Titulo MSIIN); no es una cotizacion formal."
+            "Precios REALES del arancel particular publicado por cada clinica, soportado por la "
+            "Ley de Transparencia (Ley 20.285) en Chile. 'Nombre en la clinica' es la glosa exacta "
+            "del arancel. Solo en Premium: 'Empresa (ISP)', titular del registro sanitario segun "
+            "registrosanitario.ispch.gob.cl, y 'Tipo', que indica si es el medicamento original "
+            "(marca innovadora) o un bioequivalente/biosimilar. No constituye una cotizacion "
+            "formal; confirme siempre el valor con la clinica."
         ),
     }
