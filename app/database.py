@@ -90,6 +90,21 @@ CREATE TABLE IF NOT EXISTS alertas_precio (
     precio_referencia_clp INTEGER,
     activa INTEGER DEFAULT 1
 );
+
+CREATE TABLE IF NOT EXISTS cotizaciones_lead (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fecha TEXT NOT NULL,
+    nombre TEXT,
+    apellido TEXT,
+    email TEXT NOT NULL,
+    principio_activo TEXT,
+    dosis_mg REAL,
+    veces INTEGER,
+    cobertura_pct REAL,
+    mejor_clinica TEXT,
+    mejor_total_clp INTEGER,
+    enviado_email INTEGER DEFAULT 0
+);
 """
 
 
@@ -292,5 +307,31 @@ def listar_alertas(limit: int = 1000) -> list[dict]:
     with get_conn() as conn:
         rows = conn.execute(
             "SELECT * FROM alertas_precio WHERE activa=1 ORDER BY id DESC LIMIT ?", (limit,)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+# === Leads de cotizacion (version gratuita: envio por email) ===
+
+def guardar_cotizacion_lead(data: dict) -> int:
+    init_db()
+    with get_conn() as conn:
+        cur = conn.execute(
+            """INSERT INTO cotizaciones_lead
+               (fecha, nombre, apellido, email, principio_activo, dosis_mg, veces,
+                cobertura_pct, mejor_clinica, mejor_total_clp, enviado_email)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (datetime.utcnow().isoformat(), data.get("nombre"), data.get("apellido"),
+             data.get("email"), data.get("principio_activo"), data.get("dosis_mg"),
+             data.get("veces"), data.get("cobertura_pct"), data.get("mejor_clinica"),
+             data.get("mejor_total_clp"), 1 if data.get("enviado_email") else 0),
+        )
+        return cur.lastrowid
+
+
+def listar_cotizaciones_lead(limit: int = 1000) -> list[dict]:
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM cotizaciones_lead ORDER BY id DESC LIMIT ?", (limit,)
         ).fetchall()
         return [dict(r) for r in rows]

@@ -310,7 +310,18 @@
         </div>
       </div>
 
-      <button class="btn-calc" onclick="calcularCotizacion()">Calcular costo del tratamiento</button>
+      <!-- Datos de contacto (solo version gratuita: enviamos la cotizacion por email) -->
+      <div id="cz-contacto">
+        <p class="sub" style="margin:14px 0 4px">Te enviamos la cotización a tu correo. Completa tus datos:</p>
+        <div class="cotiza-grid">
+          <div><label>Nombre</label><input id="cz-nombre" type="text" placeholder="Ej: María"></div>
+          <div><label>Apellido</label><input id="cz-apellido" type="text" placeholder="Ej: González"></div>
+        </div>
+        <label>Email</label>
+        <input id="cz-email" type="email" placeholder="tucorreo@ejemplo.cl">
+      </div>
+
+      <button class="btn-calc" id="cz-btn" onclick="calcularCotizacion()">Calcular y enviar a mi correo</button>
       <div id="cz-res" class="cot-res"></div>
       <div id="cz-prem"></div>
     </div>
@@ -377,7 +388,7 @@ function setPlan(p) {
     detalle(PA_ACTUAL); // repintar detalle con el nuevo plan
   }
   const vc = document.getElementById("vista-cotiza");
-  if (vc && !vc.classList.contains("hidden")) pintarPremiumCotiza();
+  if (vc && !vc.classList.contains("hidden")) { ajustarCotizador(); pintarPremiumCotiza(); }
 }
 
 async function cargar() {
@@ -656,9 +667,24 @@ function verSeccion(s) {
     document.getElementById("vista-lista").classList.add("hidden");
     document.getElementById("vista-det").classList.add("hidden");
     poblarSelectFarmacos();
+    ajustarCotizador();
     pintarGuardadas();
   } else {
     volver();
+  }
+}
+
+// Contacto y texto del boton dependen del plan (gratuito pide datos para enviar por email)
+function ajustarCotizador() {
+  const contacto = document.getElementById("cz-contacto");
+  const btn = document.getElementById("cz-btn");
+  if (!contacto || !btn) return;
+  if (PLAN === "prem") {
+    contacto.classList.add("hidden");
+    btn.textContent = "Calcular costo del tratamiento";
+  } else {
+    contacto.classList.remove("hidden");
+    btn.textContent = "Calcular y enviar a mi correo";
   }
 }
 
@@ -690,14 +716,43 @@ async function calcularCotizacion() {
     res.innerHTML = '<p class="disc">Completa fármaco, dosis y número de administraciones.</p>';
     return;
   }
-  res.innerHTML = '<p class="disc">Calculando…</p>';
-  const r = await fetch("/cotizar/" + encodeURIComponent(pa) + "?dosis_mg=" + dosis +
-                        "&veces=" + veces + "&cobertura_pct=" + cob);
-  if (!r.ok) { res.innerHTML = '<p class="disc">No se pudo cotizar este fármaco.</p>'; return; }
-  const d = await r.json();
+
+  let d, enviado = null;
+  if (PLAN !== "prem") {
+    // version gratuita: requiere contacto y envia la cotizacion por email
+    const nombre = document.getElementById("cz-nombre").value.trim();
+    const apellido = document.getElementById("cz-apellido").value.trim();
+    const email = document.getElementById("cz-email").value.trim();
+    if (!nombre || !apellido || !email || !email.includes("@")) {
+      res.innerHTML = '<p class="disc">Para enviarte la cotización, completa nombre, apellido y un email válido.</p>';
+      return;
+    }
+    res.innerHTML = '<p class="disc">Calculando y enviando a tu correo…</p>';
+    const r = await fetch("/cotizacion/enviar", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({principio_activo: pa, dosis_mg: dosis, veces, cobertura_pct: cob,
+                            nombre, apellido, email})
+    });
+    if (!r.ok) { res.innerHTML = '<p class="disc">No se pudo cotizar este fármaco.</p>'; return; }
+    const resp = await r.json();
+    d = resp.cotizacion; enviado = resp.enviado_email;
+  } else {
+    res.innerHTML = '<p class="disc">Calculando…</p>';
+    const r = await fetch("/cotizar/" + encodeURIComponent(pa) + "?dosis_mg=" + dosis +
+                          "&veces=" + veces + "&cobertura_pct=" + cob);
+    if (!r.ok) { res.innerHTML = '<p class="disc">No se pudo cotizar este fármaco.</p>'; return; }
+    d = await r.json();
+  }
+
   COTIZACION_ACTUAL = {pa, dosis, veces, cob, fecha: new Date().toISOString().slice(0,10),
                        mejor: d.opcion_mas_barata};
-  let html = '<div class="cot-total">Tratamiento más conveniente: <b>' +
+  let html = "";
+  if (enviado === true) {
+    html += '<div class="cot-total" style="background:#e6f4ec">📧 Te enviamos esta cotización a tu correo.</div>';
+  } else if (enviado === false) {
+    html += '<div class="cot-total" style="background:#fdf2e3;color:#8a5a08">Guardamos tu solicitud; te enviaremos la cotización a tu correo a la brevedad.</div>';
+  }
+  html += '<div class="cot-total">Tratamiento más conveniente: <b>' +
     fmt(d.opcion_mas_barata.costo_total_clp) + '</b> en ' + f2(d.opcion_mas_barata.clinica) +
     (cob ? ' (copago estimado con ' + cob + '% de cobertura: <b>' +
       fmt(Math.round(d.opcion_mas_barata.costo_total_clp * (1 - cob/100))) + '</b>)' : '') +

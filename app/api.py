@@ -96,6 +96,53 @@ async def get_cotizar(principio_activo: str, dosis_mg: float, veces: int,
 
 
 @router.post(
+    "/cotizacion/enviar",
+    summary="Cotiza y envia la cotizacion por email (version gratuita)",
+    tags=["cotizador"],
+)
+async def post_cotizacion_enviar(request: Request):
+    from . import mailer
+    body = await request.json()
+    email = (body.get("email") or "").strip()
+    nombre = (body.get("nombre") or "").strip()
+    apellido = (body.get("apellido") or "").strip()
+    pa = (body.get("principio_activo") or "").strip()
+    if not email or "@" not in email:
+        raise HTTPException(400, "Email valido requerido")
+    if not nombre or not apellido:
+        raise HTTPException(400, "Nombre y apellido requeridos")
+    try:
+        dosis = float(body.get("dosis_mg"))
+        veces = int(body.get("veces"))
+        cobertura = float(body.get("cobertura_pct") or 0)
+    except (TypeError, ValueError):
+        raise HTTPException(400, "Dosis y numero de administraciones requeridos")
+
+    cot = cat.cotizar(pa, dosis, veces, cobertura)
+    if not cot:
+        raise HTTPException(404, f"No se pudo cotizar '{pa}'")
+
+    enviado = mailer.enviar_cotizacion(email, nombre, cot)
+    mejor = cot["opcion_mas_barata"]
+    db.guardar_cotizacion_lead({
+        "nombre": nombre, "apellido": apellido, "email": email,
+        "principio_activo": pa, "dosis_mg": dosis, "veces": veces,
+        "cobertura_pct": cobertura, "mejor_clinica": mejor["clinica"],
+        "mejor_total_clp": mejor["costo_total_clp"], "enviado_email": enviado,
+    })
+    return {"ok": True, "enviado_email": enviado, "cotizacion": cot}
+
+
+@router.get(
+    "/cotizaciones",
+    summary="Lista los leads de cotizacion (gratuita)",
+    tags=["cotizador"],
+)
+async def get_cotizaciones(limit: int = 1000):
+    return {"cotizaciones": db.listar_cotizaciones_lead(limit=limit)}
+
+
+@router.post(
     "/alertas",
     summary="Registra una alerta de baja de precio (Premium)",
     tags=["cotizador"],
