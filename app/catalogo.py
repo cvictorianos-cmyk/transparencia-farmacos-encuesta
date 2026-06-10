@@ -329,8 +329,8 @@ def comparar(principio_activo: str, marca: str | None = None) -> dict | None:
         "presentaciones": presentaciones,
         "disclaimer": (
             "Precios REALES del arancel particular publicado por cada clinica (" + FECHA_DATOS +
-            "). 'Nombre en la clinica' es la glosa exacta del arancel; 'Empresa (ISP)' es el titular "
-            "del registro sanitario segun registrosanitario.ispch.gob.cl; 'Tipo' (solo Premium) indica "
+            "). 'Nombre en la clinica' es la glosa exacta del arancel. Solo en Premium: 'Empresa (ISP)', "
+            "titular del registro sanitario segun registrosanitario.ispch.gob.cl, y 'Tipo', que indica "
             "si es el medicamento original (marca innovadora) o un bioequivalente/biosimilar. Clinica "
             "Santa Maria y Clinica Alemana no publican el valor particular de estos farmacos. Fines "
             "academicos (Proyecto de Titulo MSIIN); no es una cotizacion formal."

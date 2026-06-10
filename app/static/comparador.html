@@ -287,8 +287,8 @@ async function detalle(pa) {
       '<div class="ahorro-box">Eligiendo la opción más barata (' + f2(p.clinica_mas_barata) +
         ') ahorras <b>' + fmt(p.ahorro_clp) + '</b> por vial (' + p.ahorro_pct + '%).</div>' +
       '<div class="tw"><table><thead><tr><th>Clínica</th><th>Principio activo</th>' +
-        '<th>Nombre en la clínica</th><th>Empresa (ISP)</th>' +
-        (PLAN === "prem" ? '<th>Tipo</th>' : '') +
+        '<th>Nombre en la clínica</th>' +
+        (PLAN === "prem" ? '<th>Empresa (ISP)</th><th>Tipo</th>' : '') +
         '<th style="text-align:right">Particular</th>' +
         '<th style="text-align:right">vs. menor</th></tr></thead><tbody>';
     visibles.forEach(f => {
@@ -300,8 +300,7 @@ async function detalle(pa) {
         '<td class="clinica">' + f2(f.clinica) + '</td>' +
         '<td class="pa-col">' + f.principio_activo + '</td>' +
         '<td class="glosa">' + f.glosa + '</td>' +
-        '<td class="emp">' + f.empresa + '</td>' +
-        (PLAN === "prem" ? '<td>' + chip + '</td>' : '') +
+        (PLAN === "prem" ? '<td class="emp">' + f.empresa + '</td><td>' + chip + '</td>' : '') +
         '<td class="precio">' + fmt(f.precio_particular_clp) + '</td>' +
         '<td class="precio"><span class="delta ' + (cero ? "cero" : "") + '">' +
           (cero ? "menor precio" : "+" + fmt(f.sobreprecio_vs_min_clp) +
@@ -309,8 +308,8 @@ async function detalle(pa) {
     });
     ocultas.forEach(() => {
       html += '<tr class="lock"><td class="clinica">Oculta</td>' +
-        '<td class="pa-col">•••</td><td class="glosa">•••••••</td><td class="emp">•••••</td>' +
-        (PLAN === "prem" ? '<td>🔒</td>' : '') +
+        '<td class="pa-col">•••</td><td class="glosa">•••••••</td>' +
+        (PLAN === "prem" ? '<td class="emp">•••••</td><td>🔒</td>' : '') +
         '<td class="precio">$ •••••••</td><td class="precio">—</td></tr>';
     });
     html += '</tbody></table></div>';
