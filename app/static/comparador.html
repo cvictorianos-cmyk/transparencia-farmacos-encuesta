@@ -137,13 +137,14 @@
   </div>
 
   <footer>
-    Datos: arancel público UC CHRISTUS + referenciales · fines académicos ·
+    Datos: aranceles públicos de cada clínica (precios reales, jun-2026) · fines académicos ·
     <a href="/encuesta">Responder la encuesta</a> · <a href="/docs">API</a>
   </footer>
 </div>
 
 <script>
 const fmt = n => "$" + (n ?? 0).toLocaleString("es-CL");
+const f2 = c => c.replace("Clinica ", "").replace("Hospital Clinico ", "").replace("Universidad de los Andes", "U. Andes").replace("San Carlos de Apoquindo", "San Carlos");
 let CASOS = [], PLAN = "free", PA_ACTUAL = null;
 const FREE_N = 3; // clinicas visibles en plan gratuito
 
@@ -167,8 +168,9 @@ async function cargar() {
   CASOS = data.casos;
   pintarLista(CASOS);
   document.getElementById("disc-lista").textContent =
-    "Compara " + CASOS.length + " fármacos entre " + data.clinicas.length +
-    " clínicas (UC CHRISTUS con precios reales del arancel público).";
+    "Compara " + CASOS.length + " fármacos con precios REALES del arancel particular de " +
+    data.clinicas.length + " clínicas (INDISA, Dávila, U. Andes, Hospital Clínico UC y San Carlos). " +
+    "Santa María y Alemana no publican estos precios.";
 }
 
 function pintarLista(items) {
@@ -228,9 +230,12 @@ async function detalle(pa) {
   if (!r.ok) return;
   const data = await r.json();
   const det = document.getElementById("det");
+  const totalClin = data.presentaciones[0] ? data.presentaciones[0].n_clinicas : 0;
   let html = '<h2>' + data.principio_activo + '</h2>' +
              '<div class="sub">' + data.n_presentaciones + ' presentación(es) · ' +
-             (PLAN === "free" ? FREE_N + " de 7 clínicas (gratuito)" : "7 clínicas · Premium") + '</div>';
+             (PLAN === "free"
+               ? Math.min(FREE_N, totalClin) + " de " + totalClin + " clínicas (gratuito)"
+               : totalClin + " clínicas · Premium") + ' · precios reales</div>';
 
   if (PLAN === "free") {
     html += '<div class="ad"><span class="tag">PUBLICIDAD</span>Farmacias asociadas: genéricos y biosimilares hasta 70% más baratos.</div>';
@@ -241,7 +246,7 @@ async function detalle(pa) {
     const ocultas = PLAN === "prem" ? [] : p.precios.slice(FREE_N);
     html += '<div class="pres">' +
       '<div class="pres-head"><span class="marca">' + p.marca + '</span>' +
-      '<span class="reg">Reg. ISP ' + p.registro_isp + (p.codigo_uc ? ' · Cód. UC ' + p.codigo_uc : '') + '</span></div>' +
+      '<span class="reg">Reg. ISP ' + p.registro_isp + '</span></div>' +
       '<div class="sub">' + p.presentacion + '</div>' +
       '<div class="ahorro-box">Eligiendo la opción más barata (' + p.clinica_mas_barata +
         ') ahorras <b>' + fmt(p.ahorro_clp) + '</b> por vial (' + p.ahorro_pct + '%).</div>' +
@@ -251,8 +256,7 @@ async function detalle(pa) {
       const cero = f.sobreprecio_vs_min_clp === 0;
       html += '<tr class="' + (f.es_menor ? "menor" : "") + '">' +
         '<td class="clinica">' + f.clinica +
-          '<span class="src ' + (f.fuente === "real" ? "real" : "ref") + '">' +
-          (f.fuente === "real" ? "REAL" : "REF") + '</span></td>' +
+          '<span class="src real">REAL</span></td>' +
         '<td class="precio">' + fmt(f.precio_particular_clp) + '</td>' +
         '<td class="precio"><span class="delta ' + (cero ? "cero" : "") + '">' +
           (cero ? "menor precio" : "+" + fmt(f.sobreprecio_vs_min_clp) +
@@ -275,12 +279,13 @@ async function detalle(pa) {
         '<p><b>Titular ISP:</b> ' + p.titular + '</p>' +
         '<p><b>Bioequivalente/biosimilar:</b> ' + (p.bioequivalente ? "Sí, disponible en el mercado" : "No disponible aún") + '</p>' +
         '<p>🔔 <b>Alerta de precio activada:</b> te avisamos si baja en cualquiera de las 7 clínicas.</p></div>';
-      if (p.biosimilar_uc) {
-        const b = p.biosimilar_uc;
-        html += '<div class="biosim">💊 <b>' + b.glosa + ':</b> ' +
-          fmt(b["Hospital Clinico UC CHRISTUS"]) + ' en Hospital Clínico UC y ' +
-          fmt(b["Clinica San Carlos de Apoquindo"]) + ' en San Carlos de Apoquindo. ' +
-          'Hasta <b>77% más barato</b> que la marca por el mismo principio activo.</div>';
+      if (p.biosimilar && p.biosimilar.precios && p.biosimilar.precios.length) {
+        const b = p.biosimilar;
+        const ahorroPct = Math.round((p.precio_min_clp - b.precio_min_clp) / p.precio_min_clp * 100);
+        let lista = b.precios.map(x => f2(x.clinica) + " " + fmt(x.precio_particular_clp)).join(" · ");
+        html += '<div class="biosim">💊 <b>' + b.glosa + ':</b> ' + lista +
+          '. Desde <b>' + fmt(b.precio_min_clp) + '</b>, hasta <b>' + ahorroPct +
+          '% más barato</b> que la marca por el mismo principio activo.</div>';
       }
       html += '<div class="domicilio"><b>🏠 Oncólogo a domicilio</b>' +
         'Administración guiada por enfermera oncológica certificada en tu casa. Agenda en 1 toque (servicio Premium).</div>' +

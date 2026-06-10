@@ -88,12 +88,23 @@ Luego abrir `http://localhost:8000/docs` para Swagger UI.
 instalar nada) que compara el precio particular de cada fármaco oncológico entre las
 cinco clínicas y resalta la más barata y el ahorro potencial, en la línea de GoodRx.
 
-Funciona sin scraping en vivo: los datos vienen de `app/catalogo.py`, un catálogo
-curado de **10 casos** de alto costo (precios REFERENCIALES, con fines académicos):
-pembrolizumab (Keytruda), daratumumab IV y SC (Darzalex / Darzalex Faspro),
-nivolumab (Opdivo), bevacizumab (Avastin), rituximab (Mabthera), cetuximab (Erbitux),
-ipilimumab (Yervoy), idursulfasa (Elaprase) y timoglobulina. Esto lo hace
-compatible con el plan **free de Render** (no requiere navegador headless).
+Los datos vienen de `app/catalogo.py`, con **precios REALES** del arancel particular
+publicado por cada clínica (jun-2026), extraídos de sus buscadores oficiales:
+
+| Clínica | Fuente | Método |
+|---|---|---|
+| INDISA | `ng-backend.indisa.cl/wp` | GraphQL (`landingAranceles`) |
+| Dávila | `davila.cl/aranceles` (Fármacos) | Buscador JS |
+| U. de los Andes | `clinicauandes.cl/aranceles/resultado` | Tabla HTML por `searchQuery` |
+| Hospital Clínico UC | `aranceles.ucchristus.cl/api/public` | API pública (centroId=1) |
+| San Carlos de Apoquindo | `aranceles.ucchristus.cl/api/public` | API pública (centroId=3) |
+
+Clínica Santa María y Clínica Alemana **no publican** el valor particular de estos
+oncológicos (Santa María solo expone el honorario de administración de quimioterapia;
+Alemana los lista con valor "-"), por lo que se excluyen. No todas las clínicas
+ofrecen todas las presentaciones: cada caso incluye solo las que publican esa
+presentación exacta. El comparador no requiere scraping en vivo (datos precargados),
+así que corre en el plan **free de Render**.
 
 Los endpoints `/catalogo` y `/comparar/{principio_activo}` exponen los mismos datos
 en JSON para integraciones o para el AFE.

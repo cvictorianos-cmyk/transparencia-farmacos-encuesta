@@ -1,166 +1,139 @@
-"""Catalogo precargado de farmacos oncologicos de alto costo.
+"""Catalogo de farmacos oncologicos con PRECIOS REALES de clinicas chilenas.
 
-Este modulo entrega un conjunto curado de 10 casos de farmacos oncologicos
-para que el comparador web funcione de inmediato (incluso en Render free, sin
-ejecutar scraping en vivo). Los precios son REFERENCIALES, construidos a partir
-de rangos publicos de aranceles de clinicas privadas y del valor de mercado de
-estos biologicos en Chile. No constituyen una cotizacion formal.
+Todos los precios provienen de los buscadores publicos de aranceles de cada
+clinica (valor particular, horario habil), extraidos en junio de 2026:
 
-Clinicas consideradas:
-    - 5 referenciales del benchmark en vivo: Clinica Santa Maria, Clinica Indisa,
-      Clinica Alemana, Clinica Universidad de los Andes, Clinica Davila.
-    - 2 con PRECIOS REALES extraidos de la API publica de aranceles de UC CHRISTUS
-      (aranceles.ucchristus.cl, /api/public/aranceles/v2, vigencia 2026-04-16,
-      valor particular en horario habil): Hospital Clinico UC CHRISTUS y
-      Clinica San Carlos de Apoquindo.
+    - Clinica INDISA ............... indisa.cl/aranceles-buscador (GraphQL)
+    - Clinica Davila ............... davila.cl/aranceles (categoria Farmacos)
+    - Clinica U. de los Andes ...... clinicauandes.cl/aranceles/resultado
+    - Hospital Clinico UC CHRISTUS . aranceles.ucchristus.cl/api/public (centroId=1)
+    - Clinica San Carlos Apoquindo . aranceles.ucchristus.cl/api/public (centroId=3)
 
-Estructura de cada caso:
-    principio_activo : nombre INN (minuscula)
-    indicacion       : uso clinico principal
-    marca            : nombre comercial referencial
-    titular          : laboratorio titular del registro ISP
-    registro_isp     : numero de registro sanitario referencial
-    presentacion     : forma farmaceutica / concentracion
-    bioequivalente   : True si existe biosimilar disponible en el mercado
-    precios_clinica  : {clinica: precio_particular_clp} por vial/dosis
+Clinica Santa Maria y Clinica Alemana NO publican el valor particular de estos
+farmacos oncologicos en su arancel web (Santa Maria solo expone el honorario de
+administracion de quimioterapia; Alemana los lista con valor "-"), por lo que no
+se incluyen en la comparacion.
+
+No todas las clinicas ofrecen todas las presentaciones: cada caso incluye solo
+las clinicas que publican esa presentacion exacta. Precios con fines academicos
+(Proyecto de Titulo MSIIN); no constituyen una cotizacion formal.
 """
 from __future__ import annotations
 
 from statistics import mean
 
+# Todas las clinicas del catalogo publican precio REAL.
 CLINICAS = [
-    "Clinica Santa Maria",
-    "Clinica Indisa",
-    "Clinica Alemana",
-    "Clinica Universidad de los Andes",
+    "Clinica INDISA",
     "Clinica Davila",
+    "Clinica Universidad de los Andes",
     "Hospital Clinico UC CHRISTUS",
     "Clinica San Carlos de Apoquindo",
 ]
 
-# Clinicas cuyos precios provienen de fuente real publica (no referencial)
-CLINICAS_FUENTE_REAL = {
-    "Hospital Clinico UC CHRISTUS",
-    "Clinica San Carlos de Apoquindo",
-}
+FECHA_DATOS = "2026-06 (arancel particular, horario habil)"
 
-# Nota: precios REFERENCIALES por vial / unidad de dosificacion (CLP, particular).
 CATALOGO: list[dict] = [
     {
         "principio_activo": "pembrolizumab",
         "indicacion": "Inmunoterapia (melanoma, pulmon, otros tumores PD-L1+)",
-        "marca": "Keytruda",
-        "titular": "MSD Chile (Merck Sharp & Dohme)",
+        "marca": "Keytruda 100 mg/4 mL",
+        "titular": "MSD (Merck Sharp & Dohme)",
         "registro_isp": "B-2456/15",
         "presentacion": "Vial 100 mg/4 mL concentrado para perfusion",
         "bioequivalente": False,
         "precios_clinica": {
-            "Clinica Santa Maria": 3_980_000,
-            "Clinica Indisa": 3_750_000,
-            "Clinica Alemana": 4_250_000,
-            "Clinica Universidad de los Andes": 4_090_000,
-            "Clinica Davila": 3_690_000,
+            "Clinica INDISA": 6_030_118,
+            "Clinica Davila": 4_048_980,
+            "Clinica Universidad de los Andes": 4_380_828,
             "Hospital Clinico UC CHRISTUS": 4_063_300,
             "Clinica San Carlos de Apoquindo": 4_469_630,
         },
-        "codigo_uc": "FX0045",
     },
     {
         "principio_activo": "daratumumab",
         "indicacion": "Mieloma multiple (formulacion intravenosa)",
-        "marca": "Darzalex IV",
+        "marca": "Darzalex IV 400 mg",
         "titular": "Janssen Cilag (Johnson & Johnson)",
         "registro_isp": "B-2711/17",
         "presentacion": "Vial 400 mg/20 mL concentrado para perfusion",
         "bioequivalente": False,
         "precios_clinica": {
-            "Clinica Santa Maria": 3_120_000,
-            "Clinica Indisa": 2_980_000,
-            "Clinica Alemana": 3_380_000,
-            "Clinica Universidad de los Andes": 3_240_000,
-            "Clinica Davila": 2_950_000,
+            "Clinica INDISA": 2_431_941,
+            "Clinica Universidad de los Andes": 2_796_600,
             "Hospital Clinico UC CHRISTUS": 2_319_665,
             "Clinica San Carlos de Apoquindo": 2_530_511,
         },
-        "codigo_uc": "FO0573",
     },
     {
         "principio_activo": "daratumumab",
         "indicacion": "Mieloma multiple (formulacion subcutanea)",
-        "marca": "Darzalex Faspro SC",
+        "marca": "Darzalex Faspro SC 1800 mg",
         "titular": "Janssen Cilag (Johnson & Johnson)",
         "registro_isp": "B-3110/20",
         "presentacion": "Vial 1800 mg/15 mL solucion subcutanea",
         "bioequivalente": False,
         "precios_clinica": {
-            "Clinica Santa Maria": 4_480_000,
-            "Clinica Indisa": 4_300_000,
-            "Clinica Alemana": 4_790_000,
-            "Clinica Universidad de los Andes": 4_560_000,
-            "Clinica Davila": 4_250_000,
+            "Clinica Universidad de los Andes": 5_616_940,
             "Hospital Clinico UC CHRISTUS": 5_473_958,
             "Clinica San Carlos de Apoquindo": 6_021_353,
         },
-        "codigo_uc": "FO0641",
     },
     {
         "principio_activo": "nivolumab",
         "indicacion": "Inmunoterapia (melanoma, pulmon, renal)",
-        "marca": "Opdivo",
+        "marca": "Opdivo 100 mg/10 mL",
         "titular": "Bristol Myers Squibb",
         "registro_isp": "B-2502/16",
         "presentacion": "Vial 100 mg/10 mL concentrado para perfusion",
         "bioequivalente": False,
         "precios_clinica": {
-            "Clinica Santa Maria": 2_350_000,
-            "Clinica Indisa": 2_180_000,
-            "Clinica Alemana": 2_560_000,
-            "Clinica Universidad de los Andes": 2_420_000,
-            "Clinica Davila": 2_150_000,
+            "Clinica INDISA": 2_654_551,
+            "Clinica Davila": 1_916_720,
+            "Clinica Universidad de los Andes": 2_460_840,
             "Hospital Clinico UC CHRISTUS": 2_129_885,
             "Clinica San Carlos de Apoquindo": 2_321_652,
         },
-        "codigo_uc": "FO0152",
     },
     {
         "principio_activo": "bevacizumab",
         "indicacion": "Antiangiogenico (colon, pulmon, renal, glioblastoma)",
-        "marca": "Avastin",
-        "titular": "Roche Chile",
+        "marca": "Avastin 100 mg/4 mL",
+        "titular": "Roche",
         "registro_isp": "B-1820/12",
-        "presentacion": "Vial 400 mg/16 mL concentrado para perfusion",
+        "presentacion": "Vial 100 mg/4 mL concentrado para perfusion",
         "bioequivalente": True,
         "precios_clinica": {
-            "Clinica Santa Maria": 1_290_000,
-            "Clinica Indisa": 1_150_000,
-            "Clinica Alemana": 1_420_000,
-            "Clinica Universidad de los Andes": 1_330_000,
-            "Clinica Davila": 1_120_000,
-            "Hospital Clinico UC CHRISTUS": 2_024_416,
-            "Clinica San Carlos de Apoquindo": 2_226_857,
+            "Clinica INDISA": 1_054_823,
+            "Clinica Davila": 541_362,
+            "Clinica Universidad de los Andes": 660_180,
+            "Hospital Clinico UC CHRISTUS": 586_265,
+            "Clinica San Carlos de Apoquindo": 644_891,
         },
-        "codigo_uc": "FO0516",
+        "biosimilar": {
+            "glosa": "Bevacizumab biosimilar 100 mg (Abxeda, INDISA)",
+            "Clinica INDISA": 433_160,
+        },
     },
     {
         "principio_activo": "rituximab",
         "indicacion": "Linfoma no Hodgkin, leucemia linfocitica cronica, artritis",
-        "marca": "Mabthera",
-        "titular": "Roche Chile",
+        "marca": "Mabthera 500 mg",
+        "titular": "Roche",
         "registro_isp": "B-1455/09",
         "presentacion": "Vial 500 mg/50 mL concentrado para perfusion",
         "bioequivalente": True,
         "precios_clinica": {
-            "Clinica Santa Maria": 1_480_000,
-            "Clinica Indisa": 1_320_000,
-            "Clinica Alemana": 1_590_000,
-            "Clinica Universidad de los Andes": 1_510_000,
-            "Clinica Davila": 1_290_000,
+            "Clinica INDISA": 3_139_895,
+            "Clinica Davila": 1_301_000,
+            "Clinica Universidad de los Andes": 1_926_360,
             "Hospital Clinico UC CHRISTUS": 1_750_563,
             "Clinica San Carlos de Apoquindo": 1_925_619,
         },
-        "codigo_uc": "FO0092",
-        "biosimilar_uc": {
-            "glosa": "Rituximab 500 mg biosimilar (FX9037)",
+        "biosimilar": {
+            "glosa": "Rituximab biosimilar 500 mg (Rixathon/Truxima/biosimilar UC)",
+            "Clinica INDISA": 1_365_214,
+            "Clinica Davila": 728_730,
             "Hospital Clinico UC CHRISTUS": 394_485,
             "Clinica San Carlos de Apoquindo": 433_933,
         },
@@ -168,78 +141,60 @@ CATALOGO: list[dict] = [
     {
         "principio_activo": "cetuximab",
         "indicacion": "Cancer colorrectal metastasico y de cabeza y cuello",
-        "marca": "Erbitux",
-        "titular": "Merck S.A.",
+        "marca": "Erbitux 100 mg/20 mL",
+        "titular": "Merck",
         "registro_isp": "B-1602/10",
         "presentacion": "Vial 100 mg/20 mL solucion para perfusion",
         "bioequivalente": False,
         "precios_clinica": {
-            "Clinica Santa Maria": 980_000,
-            "Clinica Indisa": 920_000,
-            "Clinica Alemana": 1_080_000,
-            "Clinica Universidad de los Andes": 1_010_000,
-            "Clinica Davila": 895_000,
+            "Clinica INDISA": 425_051,
+            "Clinica Davila": 502_244,
+            "Clinica Universidad de los Andes": 523_020,
             "Hospital Clinico UC CHRISTUS": 472_356,
             "Clinica San Carlos de Apoquindo": 519_591,
         },
-        "codigo_uc": "FO0123",
     },
     {
         "principio_activo": "ipilimumab",
         "indicacion": "Inmunoterapia (melanoma avanzado, combinaciones)",
-        "marca": "Yervoy",
+        "marca": "Yervoy 50 mg/10 mL",
         "titular": "Bristol Myers Squibb",
         "registro_isp": "B-2380/15",
         "presentacion": "Vial 50 mg/10 mL concentrado para perfusion",
         "bioequivalente": False,
         "precios_clinica": {
-            "Clinica Santa Maria": 5_120_000,
-            "Clinica Indisa": 4_880_000,
-            "Clinica Alemana": 5_490_000,
-            "Clinica Universidad de los Andes": 5_260_000,
-            "Clinica Davila": 4_790_000,
+            "Clinica INDISA": 4_758_742,
+            "Clinica Universidad de los Andes": 3_917_688,
             "Hospital Clinico UC CHRISTUS": 3_588_387,
             "Clinica San Carlos de Apoquindo": 3_947_225,
         },
-        "codigo_uc": "FO0160",
     },
     {
         "principio_activo": "idursulfasa",
         "indicacion": "Enfermedad de Hunter (mucopolisacaridosis tipo II)",
-        "marca": "Elaprase",
+        "marca": "Elaprase 2 mg/mL",
         "titular": "Takeda (Shire)",
         "registro_isp": "B-1990/13",
         "presentacion": "Vial 6 mg/3 mL concentrado para perfusion",
         "bioequivalente": False,
         "precios_clinica": {
-            "Clinica Santa Maria": 2_780_000,
-            "Clinica Indisa": 2_640_000,
-            "Clinica Alemana": 2_990_000,
-            "Clinica Universidad de los Andes": 2_850_000,
-            "Clinica Davila": 2_590_000,
             "Hospital Clinico UC CHRISTUS": 4_308_856,
             "Clinica San Carlos de Apoquindo": 4_739_741,
         },
-        "codigo_uc": "FX0063",
     },
     {
         "principio_activo": "timoglobulina",
         "indicacion": "Inmunosupresor (rechazo de trasplante, anemia aplasica)",
-        "marca": "Timoglobulina (anti-timocitica)",
+        "marca": "Timoglobulina 25 mg",
         "titular": "Sanofi (Genzyme)",
         "registro_isp": "B-1340/08",
         "presentacion": "Vial 25 mg polvo para solucion para perfusion",
         "bioequivalente": False,
         "precios_clinica": {
-            "Clinica Santa Maria": 520_000,
-            "Clinica Indisa": 478_000,
-            "Clinica Alemana": 565_000,
-            "Clinica Universidad de los Andes": 540_000,
-            "Clinica Davila": 462_000,
+            "Clinica Davila": 817_528,
             "Hospital Clinico UC CHRISTUS": 492_885,
             "Clinica San Carlos de Apoquindo": 542_172,
         },
-        "codigo_uc": "FO0007",
     },
 ]
 
@@ -259,6 +214,7 @@ def listar_catalogo() -> list[dict]:
             "indicacion": c["indicacion"],
             "presentacion": c["presentacion"],
             "bioequivalente": c["bioequivalente"],
+            "n_clinicas": len(precios),
             "precio_min_clp": min(precios),
             "precio_max_clp": max(precios),
             "ahorro_max_clp": max(precios) - min(precios),
@@ -268,11 +224,7 @@ def listar_catalogo() -> list[dict]:
 
 
 def comparar(principio_activo: str, marca: str | None = None) -> dict | None:
-    """Comparacion de precios de un caso entre las 5 clinicas.
-
-    Si un principio activo tiene varias presentaciones (ej. daratumumab IV/SC),
-    devuelve todas, o filtra por `marca` si se entrega.
-    """
+    """Comparacion de precios reales de un caso entre las clinicas que lo publican."""
     pa = _slug(principio_activo)
     casos = [c for c in CATALOGO if _slug(c["principio_activo"]) == pa]
     if marca:
@@ -296,17 +248,28 @@ def comparar(principio_activo: str, marca: str | None = None) -> dict | None:
                 "es_menor": precio == precio_min,
                 "sobreprecio_vs_min_clp": precio - precio_min,
                 "sobreprecio_vs_min_pct": round((precio - precio_min) / precio_min * 100, 1),
-                "fuente": "real" if clinica in CLINICAS_FUENTE_REAL else "referencial",
+                "fuente": "real",
             })
+        # biosimilar: normalizar a lista de filas {clinica, precio}
+        biosim = None
+        if c.get("biosimilar"):
+            b = c["biosimilar"]
+            filas_b = [
+                {"clinica": k, "precio_particular_clp": v}
+                for k, v in b.items() if k != "glosa"
+            ]
+            filas_b.sort(key=lambda f: f["precio_particular_clp"])
+            biosim = {"glosa": b.get("glosa"), "precios": filas_b,
+                      "precio_min_clp": filas_b[0]["precio_particular_clp"] if filas_b else None}
         presentaciones.append({
             "marca": c["marca"],
             "titular": c["titular"],
             "registro_isp": c["registro_isp"],
-            "codigo_uc": c.get("codigo_uc"),
-            "biosimilar_uc": c.get("biosimilar_uc"),
+            "biosimilar": biosim,
             "presentacion": c["presentacion"],
             "indicacion": c["indicacion"],
             "bioequivalente": c["bioequivalente"],
+            "n_clinicas": len(precios),
             "precio_min_clp": precio_min,
             "precio_max_clp": precio_max,
             "precio_promedio_clp": promedio,
@@ -322,9 +285,9 @@ def comparar(principio_activo: str, marca: str | None = None) -> dict | None:
         "n_presentaciones": len(presentaciones),
         "presentaciones": presentaciones,
         "disclaimer": (
-            "Fines academicos (Proyecto de Titulo MSIIN). Hospital Clinico UC CHRISTUS y "
-            "Clinica San Carlos de Apoquindo: precios REALES del arancel publico "
-            "aranceles.ucchristus.cl (valor particular, horario habil, vigencia 2026-04-16). "
-            "Resto de clinicas: precios referenciales. No constituye cotizacion formal."
+            "Precios REALES del arancel particular publicado por cada clinica (" + FECHA_DATOS +
+            "), extraidos de sus buscadores oficiales. Clinica Santa Maria y Clinica Alemana no "
+            "publican el valor particular de estos farmacos. Fines academicos (Proyecto de Titulo "
+            "MSIIN); no constituye una cotizacion formal."
         ),
     }
