@@ -324,6 +324,69 @@ def listar_catalogo() -> list[dict]:
     return out
 
 
+def dashboard() -> dict:
+    """Metricas agregadas del catalogo para el panel Premium."""
+    clinicas = set()
+    brechas = []          # ahorro_pct por caso (marca vs marca + biosimilares)
+    ahorros_clp = []      # ahorro absoluto por caso
+    por_farmaco = []      # ranking de brecha por farmaco
+    biosimilares = []     # ahorro del biosimilar vs marca
+    suma_min = suma_max = 0
+    n_ofertas = 0
+
+    for c in CATALOGO:
+        ofertas = c["ofertas"]
+        n_ofertas += len(ofertas)
+        for o in ofertas:
+            clinicas.add(o["clinica"])
+        precios = [o["precio"] for o in ofertas]
+        pmin, pmax = min(precios), max(precios)
+        suma_min += pmin
+        suma_max += pmax
+        ahorro = pmax - pmin
+        ahorro_pct = round(ahorro / pmax * 100, 1) if pmax else 0
+        brechas.append(ahorro_pct)
+        ahorros_clp.append(ahorro)
+        barata = min(ofertas, key=lambda o: o["precio"])
+        por_farmaco.append({
+            "principio_activo": c["principio_activo"],
+            "marca": c["marca"],
+            "ahorro_pct": ahorro_pct,
+            "ahorro_clp": ahorro,
+            "precio_min_clp": pmin,
+            "precio_max_clp": pmax,
+            "clinica_mas_barata": barata["clinica"],
+        })
+        marcas = [o["precio"] for o in ofertas if not o["bioequivalente"]]
+        bios = [o["precio"] for o in ofertas if o["bioequivalente"]]
+        if marcas and bios:
+            mmin, bmin = min(marcas), min(bios)
+            biosimilares.append({
+                "principio_activo": c["principio_activo"],
+                "precio_marca_min_clp": mmin,
+                "precio_biosimilar_min_clp": bmin,
+                "ahorro_pct": round((mmin - bmin) / mmin * 100, 1),
+            })
+
+    por_farmaco.sort(key=lambda x: x["ahorro_pct"], reverse=True)
+    biosimilares.sort(key=lambda x: x["ahorro_pct"], reverse=True)
+    return {
+        "n_farmacos": len({c["principio_activo"] for c in CATALOGO}),
+        "n_presentaciones": len(CATALOGO),
+        "n_clinicas": len(clinicas),
+        "n_ofertas": n_ofertas,
+        "clinicas": sorted(clinicas),
+        "brecha_promedio_pct": round(sum(brechas) / len(brechas), 1) if brechas else 0,
+        "brecha_max_pct": max(brechas) if brechas else 0,
+        "ahorro_potencial_total_clp": sum(ahorros_clp),
+        "suma_precio_min_clp": suma_min,
+        "suma_precio_max_clp": suma_max,
+        "ranking_brecha": por_farmaco,
+        "biosimilares": biosimilares,
+        "fecha_datos": FECHA_DATOS,
+    }
+
+
 def comparar(principio_activo: str, marca: str | None = None) -> dict | None:
     """Comparacion de precios reales de un caso entre las clinicas que lo publican.
 

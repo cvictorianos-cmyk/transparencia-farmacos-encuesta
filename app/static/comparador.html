@@ -12,7 +12,8 @@
   body { margin:0; font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
          background:var(--bg); color:#1c2430; line-height:1.45; }
   .wrap { max-width:760px; margin:0 auto; padding:0 14px 64px; }
-  header { background:var(--azul); color:#fff; padding:18px 16px 14px; text-align:center; }
+  header { background:var(--azul); color:#fff; padding:10px 16px 14px; text-align:center; }
+  .topbar { display:flex; justify-content:flex-end; align-items:center; min-height:30px; margin-bottom:4px; }
   header h1 { margin:0 0 4px; font-size:1.2rem; }
   header p { margin:0; font-size:.78rem; opacity:.9; }
   .plan-badge { display:inline-block; margin-top:8px; font-size:.68rem; font-weight:800;
@@ -107,12 +108,11 @@
   /* imagen del farmaco en la tarjeta */
   .caso .img { display:flex; justify-content:center; margin-bottom:8px; }
   .caso .img svg { width:64px; height:64px; }
-  /* boton login premium en header */
-  .login-btn { position:absolute; top:12px; right:14px; background:rgba(255,255,255,.14);
+  /* boton login premium en header (en barra superior, sin solapar el titulo) */
+  .login-btn { background:rgba(255,255,255,.14);
                border:1px solid rgba(255,255,255,.45); color:#fff; border-radius:999px;
-               padding:6px 13px; font-size:.72rem; font-weight:700; cursor:pointer; }
+               padding:6px 13px; font-size:.72rem; font-weight:700; cursor:pointer; white-space:nowrap; }
   .login-btn.logged { background:var(--oro); border-color:var(--oro); }
-  header { position:relative; }
   /* modal login premium */
   .modal-bg { position:fixed; inset:0; background:rgba(15,25,40,.55); z-index:50;
               display:flex; align-items:center; justify-content:center; padding:16px; }
@@ -122,6 +122,11 @@
   .modal p { margin:0 0 14px; font-size:.8rem; color:var(--gris); }
   .modal input { width:100%; padding:11px 12px; border:1px solid #cdd5df; border-radius:9px;
                  font-size:16px; margin-bottom:10px; }
+  .pass-wrap { position:relative; }
+  .pass-wrap input { padding-right:42px !important; }
+  .pass-eye { position:absolute; right:6px; top:50%; transform:translateY(-50%); background:none;
+              border:0; cursor:pointer; font-size:1.1rem; padding:4px 6px; opacity:.65; }
+  .pass-eye.on { opacity:1; }
   .modal .btn-ok { width:100%; background:var(--oro); color:#fff; border:0; border-radius:10px;
                    padding:12px; font-weight:800; font-size:.95rem; cursor:pointer; }
   .modal .btn-cancel { width:100%; background:none; border:0; color:var(--gris);
@@ -158,7 +163,8 @@
   .cotiza-form label { display:block; font-size:.82rem; font-weight:600; margin:10px 0 4px; }
   .cotiza-form select, .cotiza-form input { width:100%; padding:11px 12px; border:1px solid #cdd5df;
                  border-radius:9px; font-size:16px; background:#fff; }
-  .cotiza-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .cotiza-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; align-items:end; }
+  .cotiza-grid > div { display:flex; flex-direction:column; justify-content:flex-end; }
   .btn-calc { width:100%; margin-top:16px; background:var(--azul); color:#fff; border:0;
               border-radius:11px; padding:13px; font-size:.95rem; font-weight:800; cursor:pointer; }
   .cot-res { margin-top:14px; }
@@ -178,6 +184,24 @@
   .guardada button { background:var(--azul2); color:#fff; border:0; border-radius:7px;
                      padding:5px 10px; font-size:.72rem; font-weight:700; cursor:pointer; }
   .ok-msg { color:var(--ok); font-size:.8rem; margin-top:6px; }
+  /* dashboard premium */
+  .dash-kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin:14px 0; }
+  .kpi { background:#fff; border:1px solid var(--linea); border-radius:13px; padding:15px; }
+  .kpi .v { font-size:1.4rem; font-weight:800; color:var(--azul); }
+  .kpi .l { font-size:.74rem; color:var(--gris); margin-top:2px; }
+  .kpi.oro .v { color:var(--oro); }
+  .kpi.verde .v { color:var(--ok); }
+  .dash-card { background:#fff; border:1px solid var(--linea); border-radius:13px; padding:16px; margin:12px 0; }
+  .dash-card h3 { margin:0 0 10px; font-size:.95rem; color:var(--azul); }
+  .barrow { display:flex; align-items:center; gap:10px; margin:7px 0; font-size:.8rem; }
+  .barrow .name { width:108px; text-transform:capitalize; flex-shrink:0; color:#1c2430; }
+  .barrow .track { flex:1; background:#eef1f5; border-radius:6px; height:16px; overflow:hidden; }
+  .barrow .fill { height:100%; border-radius:6px; background:linear-gradient(90deg,var(--azul2),var(--azul)); }
+  .barrow .pct { width:50px; text-align:right; font-variant-numeric:tabular-nums; font-weight:700; color:var(--azul); }
+  .bio-row { display:flex; justify-content:space-between; gap:8px; padding:8px 0; border-bottom:1px solid var(--linea); font-size:.82rem; }
+  .bio-row:last-child { border-bottom:0; }
+  .bio-row .pa { text-transform:capitalize; font-weight:600; }
+  .bio-row .save { color:var(--ok); font-weight:800; }
   /* popup encuesta */
   .promo .modal { text-align:center; }
   .promo .regalo { font-size:2.2rem; }
@@ -218,7 +242,9 @@
 </head>
 <body>
 <header>
-  <button id="login-btn" class="login-btn" onclick="abrirLogin()">🔐 Premium · Iniciar sesión</button>
+  <div class="topbar">
+    <button id="login-btn" class="login-btn" onclick="abrirLogin()">🔐 Premium · Iniciar sesión</button>
+  </div>
   <h1>Transparencia Oncológica Clínica</h1>
   <p>Comparador de fármacos oncológicos · Clínicas de Chile</p>
   <span id="plan-badge" class="plan-badge free">VERSIÓN GRATUITA</span>
@@ -227,6 +253,7 @@
 <nav class="nav">
   <button id="nav-comp" class="act" onclick="verSeccion('comp')">Comparador</button>
   <button id="nav-cotiza" onclick="verSeccion('cotiza')">💊 Cotiza tu tratamiento</button>
+  <button id="nav-dash" class="hidden" onclick="verSeccion('dash')">📊 Dashboard</button>
   <button id="nav-encuesta" onclick="abrirPromo()">🎁 Encuesta · 7 días Premium</button>
 </nav>
 
@@ -250,7 +277,10 @@
     <p>Ingresa tus credenciales para activar la versión Premium ($4.990/mes).</p>
     <p id="err-login" class="err-login hidden">Usuario o contraseña incorrectos.</p>
     <input id="lg-user" type="text" placeholder="Usuario" autocomplete="username">
-    <input id="lg-pass" type="password" placeholder="Contraseña" autocomplete="current-password">
+    <div class="pass-wrap">
+      <input id="lg-pass" type="password" placeholder="Contraseña" autocomplete="current-password">
+      <button type="button" class="pass-eye" id="lg-eye" onclick="togglePass()" aria-label="Mostrar contraseña">👁</button>
+    </div>
     <button class="btn-ok" onclick="loginPremium()">Entrar a Premium</button>
     <button class="btn-cancel" onclick="cerrarLogin()">Cancelar</button>
   </div>
@@ -327,6 +357,11 @@
     </div>
   </div>
 
+  <!-- Vista dashboard (solo Premium) -->
+  <div id="vista-dash" class="hidden">
+    <div id="dash"></div>
+  </div>
+
   <footer>
     Datos: aranceles públicos de cada clínica (precios reales, soportado por la Ley de
     Transparencia - Ley 20.285 en Chile) ·
@@ -347,6 +382,14 @@ function abrirLogin() {
   document.getElementById("err-login").classList.add("hidden");
   document.getElementById("modal-login").classList.remove("hidden");
   document.getElementById("lg-user").focus();
+}
+function togglePass() {
+  const inp = document.getElementById("lg-pass");
+  const eye = document.getElementById("lg-eye");
+  const ver = inp.type === "password";
+  inp.type = ver ? "text" : "password";
+  eye.textContent = ver ? "🙈" : "👁";
+  eye.classList.toggle("on", ver);
 }
 function cerrarLogin() {
   document.getElementById("modal-login").classList.add("hidden");
@@ -385,6 +428,8 @@ function setPlan(p) {
   badge.textContent = p === "free" ? "VERSIÓN GRATUITA" : "PREMIUM";
   document.getElementById("ad-lista").classList.toggle("hidden", p !== "free");
   document.getElementById("alert-lista").classList.toggle("hidden", p !== "prem");
+  const nd = document.getElementById("nav-dash");
+  if (nd) nd.classList.toggle("hidden", !(p === "prem" && PREMIUM_OK));
   if (PA_ACTUAL && !document.getElementById("vista-det").classList.contains("hidden")) {
     detalle(PA_ACTUAL); // repintar detalle con el nuevo plan
   }
@@ -659,17 +704,82 @@ function volver() {
   document.getElementById("vista-lista").classList.remove("hidden");
 }
 
+// === Dashboard Premium ===
+async function cargarDashboard() {
+  const cont = document.getElementById("dash");
+  cont.innerHTML = '<p class="disc">Cargando panel…</p>';
+  let d;
+  try { d = await (await fetch("/dashboard")).json(); }
+  catch (e) { cont.innerHTML = '<p class="disc">No se pudo cargar el panel.</p>'; return; }
+
+  let html = '<h2 style="color:var(--azul);margin:6px 0 2px">📊 Panel Premium</h2>' +
+    '<p class="disc" style="margin:0 0 10px">Inteligencia de precios oncológicos · ' + d.fecha_datos + '</p>';
+
+  // KPIs
+  html += '<div class="dash-kpis">' +
+    kpi(d.n_farmacos, "fármacos monitoreados", "") +
+    kpi(d.n_clinicas, "clínicas comparadas", "") +
+    kpi(d.brecha_promedio_pct + "%", "brecha promedio entre clínicas", "oro") +
+    kpi(fmt(d.ahorro_potencial_total_clp), "ahorro potencial total*", "verde") +
+    '</div>';
+
+  // Ranking de brecha (barras)
+  html += '<div class="dash-card"><h3>Brecha de precio por fármaco</h3>';
+  const maxPct = Math.max(...d.ranking_brecha.map(x => x.ahorro_pct), 1);
+  d.ranking_brecha.forEach(x => {
+    html += '<div class="barrow"><span class="name">' + x.principio_activo + '</span>' +
+      '<span class="track"><span class="fill" style="width:' + (x.ahorro_pct / maxPct * 100) + '%"></span></span>' +
+      '<span class="pct">' + x.ahorro_pct + '%</span></div>';
+  });
+  html += '<p class="disc" style="margin-top:8px">Diferencia entre la opción más cara y la más barata de cada fármaco.</p></div>';
+
+  // Biosimilares
+  if (d.biosimilares.length) {
+    html += '<div class="dash-card"><h3>💊 Ahorro con bioequivalentes</h3>';
+    d.biosimilares.forEach(b => {
+      html += '<div class="bio-row"><span class="pa">' + b.principio_activo + '</span>' +
+        '<span>' + fmt(b.precio_biosimilar_min_clp) + ' vs ' + fmt(b.precio_marca_min_clp) +
+        ' <span class="save">−' + b.ahorro_pct + '%</span></span></div>';
+    });
+    html += '</div>';
+  }
+
+  // Mayores oportunidades (top 3)
+  html += '<div class="dash-card"><h3>🔝 Mayores oportunidades de ahorro</h3>';
+  d.ranking_brecha.slice(0, 3).forEach((x, i) => {
+    html += '<div class="bio-row"><span class="pa">' + (i + 1) + '. ' + x.principio_activo + '</span>' +
+      '<span>ahorra <b>' + fmt(x.ahorro_clp) + '</b> en ' + f2(x.clinica_mas_barata) + '</span></div>';
+  });
+  html += '</div>';
+
+  html += '<p class="disc">*Ahorro potencial total: suma, por fármaco, de la diferencia entre la opción ' +
+    'más cara y la más barata (una unidad de cada uno). Datos reales del arancel particular publicado por ' +
+    'cada clínica, soportado por la Ley de Transparencia (Ley 20.285).</p>';
+  cont.innerHTML = html;
+}
+
+function kpi(v, l, cls) {
+  return '<div class="kpi ' + (cls || "") + '"><div class="v">' + v + '</div><div class="l">' + l + '</div></div>';
+}
+
 // === Navegacion superior ===
 function verSeccion(s) {
+  if (s === "dash" && !PREMIUM_OK) { abrirLogin(); return; }
   document.getElementById("nav-comp").className = s === "comp" ? "act" : "";
   document.getElementById("nav-cotiza").className = s === "cotiza" ? "act" : "";
+  const nd = document.getElementById("nav-dash"); if (nd) nd.classList.toggle("act", s === "dash");
   document.getElementById("vista-cotiza").classList.toggle("hidden", s !== "cotiza");
+  document.getElementById("vista-dash").classList.toggle("hidden", s !== "dash");
   if (s === "cotiza") {
     document.getElementById("vista-lista").classList.add("hidden");
     document.getElementById("vista-det").classList.add("hidden");
     poblarSelectFarmacos();
     ajustarCotizador();
     pintarGuardadas();
+  } else if (s === "dash") {
+    document.getElementById("vista-lista").classList.add("hidden");
+    document.getElementById("vista-det").classList.add("hidden");
+    cargarDashboard();
   } else {
     volver();
   }

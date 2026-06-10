@@ -47,6 +47,19 @@
   .volver { display:inline-flex; align-items:center; gap:6px; color:#fff; text-decoration:none;
             font-size:.82rem; font-weight:600; opacity:.92; }
   .volver-wrap { max-width:640px; margin:0 auto; padding:10px 16px 0; }
+
+  /* ===== Formato escritorio (>=900px): mas ancho, tarjetas en 2 columnas ===== */
+  @media (min-width: 900px) {
+    header h1 { font-size:1.5rem; }
+    header p { font-size:.95rem; }
+    .volver-wrap { max-width:1000px; }
+    .wrap { max-width:1000px; padding:0 24px 64px; }
+    #f { display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; }
+    .card { margin-top:20px; padding:22px 22px; }
+    /* el boton enviar y mensajes ocupan ancho completo */
+    #f > button[type=submit], #f > .err { grid-column:1 / -1; max-width:420px; margin-left:auto; margin-right:auto; }
+    .chips label { font-size:.85rem; }
+  }
 </style>
 </head>
 <body>
@@ -121,8 +134,17 @@
       <label>Fármaco oncológico usado <span class="opt">(opcional)</span></label>
       <input type="text" name="farmaco_oncologico" placeholder="Ej: Bevacizumab / Avastin">
 
-      <label>Precio aproximado pagado por dosis/ciclo (CLP) <span class="opt">(opcional)</span></label>
-      <input type="number" name="precio_pagado_clp" inputmode="numeric" placeholder="Ej: 1200000" min="0">
+      <label>Precio aproximado pagado por dosis (CLP) <span class="opt">(opcional)</span></label>
+      <select name="precio_pagado_rango">
+        <option value="">Selecciona un rango…</option>
+        <option>Menos de $200.000</option>
+        <option>$200.000 - $500.000</option>
+        <option>$500.000 - $1.000.000</option>
+        <option>$1.000.000 - $2.000.000</option>
+        <option>$2.000.000 - $4.000.000</option>
+        <option>Más de $4.000.000</option>
+        <option>No sé / no recuerdo</option>
+      </select>
 
       <label>¿Dónde lo compraste/recibiste?</label>
       <div class="chips">

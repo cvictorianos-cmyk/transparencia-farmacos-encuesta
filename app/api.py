@@ -70,6 +70,15 @@ async def get_comparar(principio_activo: str, marca: str | None = None):
 
 
 @router.get(
+    "/dashboard",
+    summary="Metricas agregadas para el panel Premium",
+    tags=["comparador"],
+)
+async def get_dashboard():
+    return cat.dashboard()
+
+
+@router.get(
     "/historial/{principio_activo}",
     summary="Serie temporal de precios por clinica (linea de tiempo Premium)",
     tags=["comparador"],

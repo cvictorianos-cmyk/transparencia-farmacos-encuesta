@@ -88,6 +88,7 @@ class EncuestaRespuesta(BaseModel):
     # Bloque 2 - Experiencia de precios
     farmaco_oncologico: Optional[str] = Field(None, description="Principio activo o marca usada")
     precio_pagado_clp: Optional[int] = None
+    precio_pagado_rango: Optional[str] = Field(None, description="Rango de precio por dosis")
     lugar_compra: Optional[str] = Field(None, description="clinica | farmacia | hospital_publico | otro")
     comparo_precios: Optional[str] = Field(None, description="si | no | no_pude")
 
