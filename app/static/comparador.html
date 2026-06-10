@@ -227,6 +227,7 @@
 <nav class="nav">
   <button id="nav-comp" class="act" onclick="verSeccion('comp')">Comparador</button>
   <button id="nav-cotiza" onclick="verSeccion('cotiza')">💊 Cotiza tu tratamiento</button>
+  <button id="nav-encuesta" onclick="abrirPromo()">🎁 Encuesta · 7 días Premium</button>
 </nav>
 
 <!-- Popup encuesta: 7 dias Premium gratis -->
@@ -782,12 +783,9 @@ async function activarAlerta() {
                          : "No se pudo activar la alerta.";
 }
 
-// === Popup encuesta (una vez por sesion) ===
+// === Popup encuesta (se abre desde el boton del header, no automaticamente) ===
+function abrirPromo() { document.getElementById("modal-encuesta").classList.remove("hidden"); }
 function cerrarPromo() { document.getElementById("modal-encuesta").classList.add("hidden"); }
-if (!sessionStorage.getItem("promo_encuesta")) {
-  sessionStorage.setItem("promo_encuesta", "1");
-  setTimeout(() => document.getElementById("modal-encuesta").classList.remove("hidden"), 1800);
-}
 
 cargar();
 </script>
