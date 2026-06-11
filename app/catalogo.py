@@ -41,23 +41,23 @@ FECHA_DATOS = "2026-06 (arancel particular, horario habil)"
 # Categorias clinicas (tipo de cancer / area) a las que se asocia cada principio
 # activo, segun sus indicaciones. Un farmaco puede pertenecer a varias.
 CATEGORIAS_POR_PA = {
-    "pembrolizumab": ["Pulmón", "Mama", "Estómago", "Melanoma", "Vejiga"],
+    "pembrolizumab": ["Mama"],
     "daratumumab": ["Mieloma múltiple"],
     "nivolumab": ["Pulmón", "Melanoma", "Renal", "Estómago"],
     "bevacizumab": ["Colon", "Pulmón", "Renal", "Ovario"],
     "rituximab": ["Linfoma", "Leucemia"],
     "cetuximab": ["Colon", "Cabeza y cuello"],
     "ipilimumab": ["Melanoma", "Renal"],
-    "idursulfasa": ["Enfermedades raras"],
-    "timoglobulina": ["Trasplante / inmunología"],
 }
 
 # Emoji por categoria (para las tarjetas de la primera pagina).
+# Solo se usan emojis ampliamente compatibles (se evitan los de organos 2020:
+# pulmones/riñon/corazon que no renderizan en Windows 10).
 _CAT_ICON = {
-    "Mama": "🎀", "Pulmón": "🫁", "Colon": "🧬", "Estómago": "🩺", "Próstata": "🧔",
-    "Melanoma": "🧴", "Renal": "🫘", "Vejiga": "💧", "Ovario": "🌸",
+    "Mama": "🎀", "Pulmón": "🌬️", "Colon": "🧬", "Estómago": "🍽️", "Próstata": "🧔",
+    "Melanoma": "🧴", "Renal": "🧫", "Vejiga": "💧", "Ovario": "🌸",
     "Linfoma": "🩸", "Leucemia": "🩸", "Mieloma múltiple": "🦴",
-    "Cabeza y cuello": "👤", "Enfermedades raras": "🧪", "Trasplante / inmunología": "🫀",
+    "Cabeza y cuello": "👤",
 }
 
 
@@ -241,31 +241,6 @@ CATALOGO: list[dict] = [
             _o("Clinica Universidad de los Andes", "IPILIMUMAB FAM 50 MG / 10 ML", 3_917_688),
             _o("UC Marcoleta", "IPILIMUMAB 50MG EV AMP (FO0160)", 3_588_387),
             _o("UC San Carlos", "IPILIMUMAB 50MG EV AMP (FO0160)", 3_947_225),
-        ],
-    },
-    {
-        "principio_activo": "idursulfasa",
-        "marca": "Elaprase 2 mg/mL",
-        "indicacion": "Enfermedad de Hunter (mucopolisacaridosis tipo II)",
-        "titular": "Takeda (Shire)",
-        "registro_isp": "B-1990/13",
-        "presentacion": "Vial 6 mg/3 mL concentrado para perfusion",
-        "ofertas": [
-            _o("UC Marcoleta", "IDURSULFASA 2 MG ML X 3ML (FX0063)", 4_308_856),
-            _o("UC San Carlos", "IDURSULFASA 2 MG ML X 3ML (FX0063)", 4_739_741),
-        ],
-    },
-    {
-        "principio_activo": "timoglobulina",
-        "marca": "Timoglobulina 25 mg",
-        "indicacion": "Inmunosupresor (rechazo de trasplante, anemia aplasica)",
-        "titular": "Sanofi (Genzyme)",
-        "registro_isp": "B-1340/08",
-        "presentacion": "Vial 25 mg polvo para solucion para perfusion",
-        "ofertas": [
-            _o("Clinica Davila", "TIMOGLOBULINA DE CONEJO 25 MG FRASCO AMP", 817_528),
-            _o("UC Marcoleta", "TIMOGLOBULINA 25 MG (FO0007)", 492_885),
-            _o("UC San Carlos", "TIMOGLOBULINA 25 MG (FO0007)", 542_172),
         ],
     },
 ]

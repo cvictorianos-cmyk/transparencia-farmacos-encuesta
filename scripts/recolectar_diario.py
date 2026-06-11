@@ -33,7 +33,7 @@ CSV_COLS = ["fecha", "clinica", "principio_activo", "glosa", "precio_clp"]
 
 DROGAS = [
     "pembrolizumab", "daratumumab", "nivolumab", "bevacizumab", "rituximab",
-    "cetuximab", "ipilimumab", "idursulfasa", "timoglobulina",
+    "cetuximab", "ipilimumab",
 ]
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (proyecto academico MSIIN - benchmarking precios)"}
