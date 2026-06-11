@@ -9,8 +9,11 @@ Fuentes (las mismas del catalogo):
     - Clinica U. de los Andes ...... pagina de resultados (tabla HTML)
     - UC Marcoleta (Hospital Clinico) . API publica aranceles.ucchristus.cl (centroId=1)
     - UC San Carlos (Apoquindo) ...... API publica aranceles.ucchristus.cl (centroId=3)
-    - Clinica Davila: su buscador es 100% JavaScript (sin endpoint HTTP simple),
-      por lo que no se recolecta aqui; mantiene su ultimo precio conocido.
+    - Clinica Davila, Clinica Santa Maria, Clinica Alemana y FALP: sus aranceles
+      no exponen un endpoint HTTP simple (Davila/Santa Maria/Alemana son SPAs
+      JavaScript; FALP publica solo PDF), por lo que no se recolectan aqui; sus
+      precios se mantienen con el ultimo valor conocido del catalogo. Para
+      actualizarlos se revisa manualmente y se edita app/catalogo.py.
 
 Uso:  python scripts/recolectar_diario.py
 Idempotente: si ya hay filas con la fecha de hoy, no duplica.

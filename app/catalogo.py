@@ -34,6 +34,9 @@ CLINICAS = [
     "Clinica Universidad de los Andes",
     "UC Marcoleta",
     "UC San Carlos",
+    "Clinica Santa Maria",
+    "Clinica Alemana",
+    "FALP",
 ]
 
 FECHA_DATOS = "2026-06 (arancel particular, horario habil)"
@@ -92,6 +95,7 @@ _EMPRESAS_ISP = [
     ("ABXEDA", "Laboratorios Recalcine S.A."),
     ("RIXATHON", "Sandoz Chile S.p.A."),
     ("TRUXIMA", "Celltrion Healthcare Chile S.p.A."),
+    ("ABBOTT", "Abbott Laboratories de Chile Ltda."),
     ("BIOSIMILAR", "Biosimilar (Sandoz / Celltrion)"),
     ("KEYTRUDA", "Merck Sharp & Dohme (I.A.) LLC"),
     ("PEMBROLIZUMAB", "Merck Sharp & Dohme (I.A.) LLC"),
@@ -135,6 +139,8 @@ CATALOGO: list[dict] = [
             _o("Clinica Universidad de los Andes", "PEMBROLIZUMAB 100 MG FAM", 4_380_828),
             _o("UC Marcoleta", "PEMBROLIZUMAB 100MG 4ML (FX0045)", 4_063_300),
             _o("UC San Carlos", "PEMBROLIZUMAB 100MG 4ML (FX0045)", 4_469_630),
+            _o("Clinica Santa Maria", "KEYTRUDA 100 MG (PEMBROLIZUMAB) FRASCO (65380006)", 3_832_456),
+            _o("FALP", "PEMBROLIZUMAB 100MG FA (10400277)", 3_382_751),
         ],
     },
     {
@@ -149,6 +155,8 @@ CATALOGO: list[dict] = [
             _o("Clinica Universidad de los Andes", "DARATUMUMAB 400 MG FAM", 2_796_600),
             _o("UC Marcoleta", "DARATUMUMAB 400 MG 20 ML X 1 FA (FO0573)", 2_319_665),
             _o("UC San Carlos", "DARATUMUMAB 400 MG 20 ML X 1 FA (FO0573)", 2_530_511),
+            _o("Clinica Santa Maria", "DARZALEX (DARATUMUMAB) 400 MG/20 ML (65380014)", 2_585_548),
+            _o("FALP", "DARATUMUMAB 400 MG/20ML (10400399)", 1_696_735),
         ],
     },
     {
@@ -177,6 +185,9 @@ CATALOGO: list[dict] = [
             _o("Clinica Universidad de los Andes", "NIVOLUMAB 100 MG FAM", 2_460_840),
             _o("UC Marcoleta", "NIVOLUMAB 100 MG REFRIGERADO (FO0152)", 2_129_885),
             _o("UC San Carlos", "NIVOLUMAB 100 MG REFRIGERADO (FO0152)", 2_321_652),
+            _o("Clinica Santa Maria", "OPDIVO 100 MG (NIVOLUMAB) FRASCO (65380004)", 2_125_511),
+            _o("Clinica Alemana", "OPDIVO (NIVOLUMAB) 100 MG/10 ML X VIAL (500820011)", 1_922_512),
+            _o("FALP", "NIVOLUMAB 100 MG FA (10400290)", 1_559_212),
         ],
     },
     {
@@ -193,6 +204,9 @@ CATALOGO: list[dict] = [
             _o("Clinica Universidad de los Andes", "BEVACIZUMAB FAM 100 MG/4 ML", 660_180),
             _o("UC Marcoleta", "BEVACIZUMAB 100 MG /4 ML *REFRIGERADO* (FO0026)", 586_265),
             _o("UC San Carlos", "BEVACIZUMAB 100 MG/4ML (FO0026)", 644_891),
+            _o("Clinica Santa Maria", "AVASTIN 100 MG/4 ML (BEVACIZUMAB) (65100042)", 536_954),
+            _o("FALP", "BEVACIZUMAB 100 MG (AVASTIN) (10400102)", 475_507),
+            _o("FALP", "BEVACIZUMAB 100 MG (ABBOTT) (10400674)", 397_338, bioeq=True),
         ],
     },
     {
@@ -212,6 +226,11 @@ CATALOGO: list[dict] = [
             _o("UC Marcoleta", "RITUXIMAB 500MG REFRIGERADO BIOSIMILAR (FX9037)", 394_485, bioeq=True),
             _o("UC San Carlos", "RITUXIMAB 500 MG (FO0092)", 1_925_619),
             _o("UC San Carlos", "RITUXIMAB 500MG BIOSIMILAR (FX9037)", 433_933, bioeq=True),
+            _o("Clinica Santa Maria", "MABTHERA 500 MG/50 ML (RITUXIMAB) (65100035)", 1_677_788),
+            _o("Clinica Santa Maria", "TRUXIMA 500MG/50ML (RITUXIMAB) (65380022)", 1_513_422, bioeq=True),
+            _o("FALP", "RITUXIMAB 500 MG (RM ROCHE) (10400083)", 1_105_099),
+            _o("FALP", "RITUXIMAB 500 MG (RIXATHON) (10400503)", 331_810, bioeq=True),
+            _o("FALP", "RITUXIMAB 500 MG (TRUXIMA) (10400444)", 191_445, bioeq=True),
         ],
     },
     {
@@ -227,6 +246,8 @@ CATALOGO: list[dict] = [
             _o("Clinica Universidad de los Andes", "CETUXIMAB 100 MG/20 ML FAM", 523_020),
             _o("UC Marcoleta", "CETUXIMAB 100 MG REFRIGERADO (FO0123)", 472_356),
             _o("UC San Carlos", "CETUXIMAB 100 MG REFRIGERADO (FO0123)", 519_591),
+            _o("Clinica Santa Maria", "ERBITUX 100 MG/20 ML (CETUXIMAB) (65100039)", 776_974),
+            _o("FALP", "CETUXIMAB 100 MG/20ML (ERBITUX) (10400107)", 495_736),
         ],
     },
     {
@@ -241,6 +262,8 @@ CATALOGO: list[dict] = [
             _o("Clinica Universidad de los Andes", "IPILIMUMAB FAM 50 MG / 10 ML", 3_917_688),
             _o("UC Marcoleta", "IPILIMUMAB 50MG EV AMP (FO0160)", 3_588_387),
             _o("UC San Carlos", "IPILIMUMAB 50MG EV AMP (FO0160)", 3_947_225),
+            _o("Clinica Santa Maria", "YERVOY 50 MG (IPILIMUMAB) (65380003)", 3_994_979),
+            _o("FALP", "IPILIMUMAB 50 MG/10 ML FA (10400215)", 3_085_503),
         ],
     },
 ]
