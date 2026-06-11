@@ -167,9 +167,12 @@ def recolectar_uc(client: httpx.Client) -> list[dict]:
     centros = {1: "UC Marcoleta", 3: "UC San Carlos"}
     for cid, cname in centros.items():
         for d in DROGAS:
+            # UC indexa por principio activo (no por marca); se mantiene el filtro
+            # de agrupador "Insumos y Farmacos" para excluir honorarios/procedimientos.
             for term in terminos_busqueda(d):
                 url = ("https://aranceles.ucchristus.cl/api/public/aranceles/v2"
-                       f"?centroId={cid}&query={urllib.parse.quote(term)}&limit=50")
+                       f"?centroId={cid}&agrupador=Insumos+y+F%C3%A1rmacos"
+                       f"&query={urllib.parse.quote(term)}&limit=50")
                 try:
                     r = client.get(url)
                     r.raise_for_status()
@@ -182,9 +185,9 @@ def recolectar_uc(client: httpx.Client) -> list[dict]:
                     glosa = _norm(i.get("glosa") or i.get("descripcion"))
                     cod = i.get("codigo")
                     precio = _precio_int(i.get("valor_lista_particular_red"))
-                    # solo farmacos (excluir honorarios/procedimientos)
                     tipo = (i.get("tipo") or "").upper()
-                    if glosa and precio and _match_droga(glosa, d) and "FARMACO" in (tipo or "FARMACO"):
+                    if (glosa and precio and _match_droga(glosa, d)
+                            and "HONORARIO" not in tipo and "PROCEDIMIENTO" not in tipo):
                         filas.append({"clinica": cname, "principio_activo": d,
                                       "glosa": f"{glosa} ({cod})" if cod else glosa,
                                       "precio_clp": precio})
