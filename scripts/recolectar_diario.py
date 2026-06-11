@@ -39,6 +39,24 @@ DROGAS = [
     "cetuximab", "ipilimumab",
 ]
 
+# Para cada principio activo, ademas se busca por nombre comercial (marca
+# innovadora y biosimilares), porque algunas clinicas indexan por uno u otro.
+NOMBRES_COMERCIALES = {
+    "pembrolizumab": ["keytruda"],
+    "daratumumab": ["darzalex"],
+    "nivolumab": ["opdivo"],
+    "bevacizumab": ["avastin", "abxeda", "mvasi", "zirabev", "krabeva", "bemabix", "vegzelma"],
+    "rituximab": ["mabthera", "truxima", "rixathon", "reditux", "ritemvia"],
+    "cetuximab": ["erbitux"],
+    "ipilimumab": ["yervoy"],
+}
+
+
+def terminos_busqueda(pa: str) -> list[str]:
+    """Principio activo + sus nombres comerciales (para barrer ambos)."""
+    return [pa] + NOMBRES_COMERCIALES.get(pa, [])
+
+
 HEADERS = {"User-Agent": "Mozilla/5.0 (proyecto academico MSIIN - benchmarking precios)"}
 TIMEOUT = 30.0
 
@@ -56,77 +74,92 @@ def _precio_int(txt) -> int | None:
     return int(digits) if digits else None
 
 
+def _match_droga(glosa: str, pa: str) -> bool:
+    """True si la glosa corresponde al principio activo o a una de sus marcas."""
+    g = _norm(glosa)
+    if pa.upper()[:6] in g:
+        return True
+    return any(nc.upper() in g for nc in NOMBRES_COMERCIALES.get(pa, []))
+
+
+def _dedup(filas: list[dict]) -> list[dict]:
+    vistos, unicas = set(), []
+    for f in filas:
+        k = (f["clinica"], f["glosa"], f["precio_clp"])
+        if k not in vistos:
+            vistos.add(k)
+            unicas.append(f)
+    return unicas
+
+
 def recolectar_indisa(client: httpx.Client) -> list[dict]:
     filas = []
     sha = "bf0f817f735780b095df216d3b3d06545663e99c66ca98a7e58b02577c9d48e2"
+
+    def buscar(obj):
+        if isinstance(obj, dict):
+            if isinstance(obj.get("landingAranceles"), list):
+                return obj["landingAranceles"]
+            for v in obj.values():
+                f = buscar(v)
+                if f:
+                    return f
+        return None
+
     for d in DROGAS:
-        variables = urllib.parse.quote(json.dumps({
-            "param": "medicamentos", "araprev": "particular", "aracode": "",
-            "araname": d, "uri": "/aranceles-buscador/"}))
-        ext = urllib.parse.quote(json.dumps(
-            {"persistedQuery": {"version": 1, "sha256Hash": sha}}))
-        url = (f"https://ng-backend.indisa.cl/wp/index.php?graphql"
-               f"&operationName=GetPageData&variables={variables}&extensions={ext}")
-        try:
-            r = client.get(url)
-            r.raise_for_status()
-            data = r.json()
-        except Exception as e:
-            print(f"  INDISA {d}: ERROR {e}", file=sys.stderr)
-            continue
-
-        def buscar(obj):
-            if isinstance(obj, dict):
-                if isinstance(obj.get("landingAranceles"), list):
-                    return obj["landingAranceles"]
-                for v in obj.values():
-                    f = buscar(v)
-                    if f:
-                        return f
-            return None
-
-        for a in (buscar(data) or []):
-            glosa = _norm(a.get("service_detail"))
-            precio = _precio_int(a.get("med_value"))
-            if glosa and precio and d.upper()[:6] in glosa:
-                filas.append({"clinica": "Clinica INDISA",
-                              "principio_activo": d, "glosa": glosa, "precio_clp": precio})
-    return filas
+        # barrer principio activo y nombres comerciales
+        for term in terminos_busqueda(d):
+            variables = urllib.parse.quote(json.dumps({
+                "param": "medicamentos", "araprev": "particular", "aracode": "",
+                "araname": term, "uri": "/aranceles-buscador/"}))
+            ext = urllib.parse.quote(json.dumps(
+                {"persistedQuery": {"version": 1, "sha256Hash": sha}}))
+            url = (f"https://ng-backend.indisa.cl/wp/index.php?graphql"
+                   f"&operationName=GetPageData&variables={variables}&extensions={ext}")
+            try:
+                r = client.get(url)
+                r.raise_for_status()
+                data = r.json()
+            except Exception as e:
+                print(f"  INDISA {term}: ERROR {e}", file=sys.stderr)
+                continue
+            for a in (buscar(data) or []):
+                glosa = _norm(a.get("service_detail"))
+                precio = _precio_int(a.get("med_value"))
+                if glosa and precio and _match_droga(glosa, d):
+                    filas.append({"clinica": "Clinica INDISA",
+                                  "principio_activo": d, "glosa": glosa, "precio_clp": precio})
+    return _dedup(filas)
 
 
 def recolectar_uandes(client: httpx.Client) -> list[dict]:
     filas = []
     for d in DROGAS:
-        url = ("https://www.clinicauandes.cl/aranceles/resultado"
-               f"?indexCatalogue=aranceles-web&searchQuery={d}")
-        try:
-            r = client.get(url)
-            r.raise_for_status()
-            html = r.text
-        except Exception as e:
-            print(f"  UANDES {d}: ERROR {e}", file=sys.stderr)
-            continue
-        # filas de tabla: ... | CODIGO | NOMBRE | - | - | 1.234.567 | 1.234.567
-        for tr in re.findall(r"<tr[^>]*>(.*?)</tr>", html, re.S | re.I):
-            celdas = [re.sub(r"<[^>]+>", " ", c) for c in
-                      re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", tr, re.S | re.I)]
-            celdas = [_norm(c) for c in celdas]
-            if len(celdas) >= 6 and d.upper()[:6] in " ".join(celdas):
-                nombre = next((c for c in celdas if d.upper()[:6] in c), None)
-                precios = [_precio_int(c) for c in celdas if re.match(r"^[\d.,]+$", c or "")]
-                precios = [p for p in precios if p and p > 10000]
-                if nombre and precios:
-                    filas.append({"clinica": "Clinica Universidad de los Andes",
-                                  "principio_activo": d, "glosa": nombre,
-                                  "precio_clp": precios[-1]})
-    # deduplicar (glosa)
-    vistos, unicas = set(), []
-    for f in filas:
-        k = (f["glosa"], f["precio_clp"])
-        if k not in vistos:
-            vistos.add(k)
-            unicas.append(f)
-    return unicas
+        for term in terminos_busqueda(d):
+            url = ("https://www.clinicauandes.cl/aranceles/resultado"
+                   f"?indexCatalogue=aranceles-web&searchQuery={urllib.parse.quote(term)}")
+            try:
+                r = client.get(url)
+                r.raise_for_status()
+                html = r.text
+            except Exception as e:
+                print(f"  UANDES {term}: ERROR {e}", file=sys.stderr)
+                continue
+            # filas de tabla: ... | CODIGO | NOMBRE | - | - | 1.234.567 | 1.234.567
+            for tr in re.findall(r"<tr[^>]*>(.*?)</tr>", html, re.S | re.I):
+                celdas = [re.sub(r"<[^>]+>", " ", c) for c in
+                          re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", tr, re.S | re.I)]
+                celdas = [_norm(c) for c in celdas]
+                joined = " ".join(celdas)
+                if len(celdas) >= 6 and _match_droga(joined, d):
+                    nombre = next((c for c in celdas if _match_droga(c, d)), None)
+                    precios = [_precio_int(c) for c in celdas if re.match(r"^[\d.,]+$", c or "")]
+                    precios = [p for p in precios if p and p > 10000]
+                    if nombre and precios:
+                        filas.append({"clinica": "Clinica Universidad de los Andes",
+                                      "principio_activo": d, "glosa": nombre,
+                                      "precio_clp": precios[-1]})
+    return _dedup(filas)
 
 
 def recolectar_uc(client: httpx.Client) -> list[dict]:
@@ -134,25 +167,28 @@ def recolectar_uc(client: httpx.Client) -> list[dict]:
     centros = {1: "UC Marcoleta", 3: "UC San Carlos"}
     for cid, cname in centros.items():
         for d in DROGAS:
-            url = ("https://aranceles.ucchristus.cl/api/public/aranceles/v2"
-                   f"?centroId={cid}&agrupador=Insumos+y+F%C3%A1rmacos&query={d}&limit=50")
-            try:
-                r = client.get(url)
-                r.raise_for_status()
-                data = r.json()
-            except Exception as e:
-                print(f"  UC c{cid} {d}: ERROR {e}", file=sys.stderr)
-                continue
-            items = data.get("items") or data.get("data") or data.get("results") or []
-            for i in items if isinstance(items, list) else []:
-                glosa = _norm(i.get("glosa") or i.get("descripcion"))
-                cod = i.get("codigo")
-                precio = _precio_int(i.get("valor_lista_particular_red"))
-                if glosa and precio:
-                    filas.append({"clinica": cname, "principio_activo": d,
-                                  "glosa": f"{glosa} ({cod})" if cod else glosa,
-                                  "precio_clp": precio})
-    return filas
+            for term in terminos_busqueda(d):
+                url = ("https://aranceles.ucchristus.cl/api/public/aranceles/v2"
+                       f"?centroId={cid}&query={urllib.parse.quote(term)}&limit=50")
+                try:
+                    r = client.get(url)
+                    r.raise_for_status()
+                    data = r.json()
+                except Exception as e:
+                    print(f"  UC c{cid} {term}: ERROR {e}", file=sys.stderr)
+                    continue
+                items = data.get("items") or data.get("data") or data.get("results") or []
+                for i in items if isinstance(items, list) else []:
+                    glosa = _norm(i.get("glosa") or i.get("descripcion"))
+                    cod = i.get("codigo")
+                    precio = _precio_int(i.get("valor_lista_particular_red"))
+                    # solo farmacos (excluir honorarios/procedimientos)
+                    tipo = (i.get("tipo") or "").upper()
+                    if glosa and precio and _match_droga(glosa, d) and "FARMACO" in (tipo or "FARMACO"):
+                        filas.append({"clinica": cname, "principio_activo": d,
+                                      "glosa": f"{glosa} ({cod})" if cod else glosa,
+                                      "precio_clp": precio})
+    return _dedup(filas)
 
 
 def main() -> int:
