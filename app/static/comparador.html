@@ -36,6 +36,10 @@
   /* alertas premium */
   .alertbox { background:var(--orobg); border:1px solid #e8d49a; border-radius:11px;
               padding:10px 13px; margin:10px 0; font-size:.8rem; color:var(--orotxt); }
+  .vmode { display:flex; gap:6px; margin:4px 0 8px; }
+  .vmode button { flex:1; border:1px solid #cdd5df; background:#fff; border-radius:999px;
+                  padding:8px 12px; font-size:.8rem; font-weight:700; cursor:pointer; color:var(--gris); }
+  .vmode button.act { background:var(--azul); border-color:var(--azul); color:#fff; }
   .cat-intro { font-size:.85rem; color:var(--gris); margin:6px 0 10px; }
   .cat-titulo { font-size:1.1rem; color:var(--azul); margin:6px 0 12px; text-transform:capitalize; }
   .cats { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
@@ -211,6 +215,19 @@
   .bio-row:last-child { border-bottom:0; }
   .bio-row .pa { text-transform:capitalize; font-weight:600; }
   .bio-row .save { color:var(--ok); font-weight:800; }
+  .dash-filtros { background:#fff; border:1px solid var(--linea); border-radius:13px; padding:14px; margin:10px 0; }
+  .dash-filtros h4 { margin:0 0 8px; font-size:.82rem; color:var(--azul); }
+  .chk-group { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .chk-group label { display:inline-flex; align-items:center; gap:5px; background:var(--bg);
+                     border:1px solid #cdd5df; border-radius:999px; padding:5px 11px;
+                     font-size:.76rem; cursor:pointer; }
+  .chk-group input { accent-color:var(--azul); }
+  .fechas { display:flex; gap:10px; flex-wrap:wrap; align-items:end; }
+  .fechas > div { display:flex; flex-direction:column; }
+  .fechas label { font-size:.74rem; color:var(--gris); margin-bottom:3px; }
+  .fechas input { border:1px solid #cdd5df; border-radius:8px; padding:8px 10px; font-size:14px; }
+  .fechas button { background:var(--azul); color:#fff; border:0; border-radius:9px;
+                   padding:9px 16px; font-weight:700; cursor:pointer; font-size:.82rem; }
   .dash-dl { display:flex; flex-wrap:wrap; gap:10px; margin:6px 0 4px; }
   .dash-dl .dl-btn { flex:1; min-width:200px; text-align:center; text-decoration:none;
                      background:var(--azul); color:#fff; border-radius:10px; padding:12px;
@@ -318,6 +335,12 @@
     </div>
     <div id="alert-lista" class="alertbox hidden">
       🔔 <b>Tus alertas activas:</b> 3 fármacos con baja de precio esta semana. Sin publicidad.
+    </div>
+
+    <!-- Toggle de vista: por tipo de cancer / por farmaco -->
+    <div class="vmode">
+      <button id="vm-tipo" class="act" onclick="setVistaModo('tipo')">Por tipo de cáncer</button>
+      <button id="vm-farmaco" onclick="setVistaModo('farmaco')">Por fármaco</button>
     </div>
 
     <!-- Categorias oncologicas (primera pantalla) -->
@@ -494,6 +517,7 @@ function pintarCategorias() {
 function seleccionarCategoria(categoria) {
   const items = CASOS.filter(c => (c.categorias || []).includes(categoria));
   document.getElementById("cat-titulo").textContent = categoria;
+  document.getElementById("volver-cat").classList.remove("hidden");
   document.getElementById("vista-cats").classList.add("hidden");
   document.getElementById("vista-drogas").classList.remove("hidden");
   pintarLista(items);
@@ -501,8 +525,32 @@ function seleccionarCategoria(categoria) {
 
 function verCategorias() {
   document.getElementById("q").value = "";
+  if (VISTA_MODO === "farmaco") { mostrarTodosFarmacos(); return; }
   document.getElementById("vista-drogas").classList.add("hidden");
   document.getElementById("vista-cats").classList.remove("hidden");
+}
+
+let VISTA_MODO = "tipo";
+function setVistaModo(modo) {
+  VISTA_MODO = modo;
+  document.getElementById("vm-tipo").className = modo === "tipo" ? "act" : "";
+  document.getElementById("vm-farmaco").className = modo === "farmaco" ? "act" : "";
+  document.getElementById("q").value = "";
+  document.querySelector(".cat-intro").classList.toggle("hidden", modo === "farmaco");
+  if (modo === "farmaco") {
+    mostrarTodosFarmacos();
+  } else {
+    document.getElementById("vista-drogas").classList.add("hidden");
+    document.getElementById("vista-cats").classList.remove("hidden");
+  }
+}
+
+function mostrarTodosFarmacos() {
+  document.getElementById("vista-cats").classList.add("hidden");
+  document.getElementById("vista-drogas").classList.remove("hidden");
+  document.getElementById("volver-cat").classList.add("hidden");
+  document.getElementById("cat-titulo").textContent = "Todos los fármacos";
+  pintarLista(CASOS);
 }
 
 // Imagen SVG del farmaco (vial de perfusion), color propio por molecula.
@@ -769,15 +817,37 @@ function volver() {
 }
 
 // === Dashboard Premium ===
+let DASH_CLIN = [];   // clinicas seleccionadas (vacío = todas)
+let DASH_FARM = [];   // farmacos seleccionados (vacío = todos)
+
 async function cargarDashboard() {
   const cont = document.getElementById("dash");
   cont.innerHTML = '<p class="disc">Cargando panel…</p>';
+  const qs = new URLSearchParams();
+  if (DASH_CLIN.length) qs.set("clinicas", DASH_CLIN.join(","));
+  if (DASH_FARM.length) qs.set("farmacos", DASH_FARM.join(","));
   let d;
-  try { d = await (await fetch("/dashboard")).json(); }
+  try { d = await (await fetch("/dashboard?" + qs.toString())).json(); }
   catch (e) { cont.innerHTML = '<p class="disc">No se pudo cargar el panel.</p>'; return; }
 
   let html = '<h2 style="color:var(--azul);margin:6px 0 2px">📊 Panel Premium</h2>' +
     '<p class="disc" style="margin:0 0 10px">Inteligencia de precios oncológicos · ' + d.fecha_datos + '</p>';
+
+  // Filtros: clinicas y farmacos (multiseleccion)
+  html += '<div class="dash-filtros"><h4>Filtrar clínicas</h4><div class="chk-group">';
+  d.todas_clinicas.forEach(c => {
+    const ck = DASH_CLIN.length === 0 || DASH_CLIN.includes(c);
+    html += '<label><input type="checkbox" ' + (ck ? "checked" : "") +
+      ' onchange="toggleFiltro(\'clin\',this.value,this.checked)" value="' + c + '">' + f2(c) + '</label>';
+  });
+  html += '</div><h4>Filtrar fármacos</h4><div class="chk-group">';
+  d.todos_farmacos.forEach(p => {
+    const ck = DASH_FARM.length === 0 || DASH_FARM.includes(p);
+    html += '<label><input type="checkbox" ' + (ck ? "checked" : "") +
+      ' onchange="toggleFiltro(\'farm\',this.value,this.checked)" value="' + p +
+      '" style="text-transform:capitalize">' + p + '</label>';
+  });
+  html += '</div></div>';
 
   // Botones de descarga (ERP / reporte)
   html += '<div class="dash-dl">' +
@@ -836,10 +906,91 @@ async function cargarDashboard() {
   });
   html += '</div>';
 
+  // Historico con rango de fechas
+  const hoy = new Date().toISOString().slice(0, 10);
+  html += '<div class="dash-card"><h3>📈 Evolución histórica de precios</h3>' +
+    '<div class="fechas">' +
+      '<div><label>Desde</label><input id="h-desde" type="date" value="2026-01-01" max="' + hoy + '"></div>' +
+      '<div><label>Hasta</label><input id="h-hasta" type="date" value="' + hoy + '" max="' + hoy + '"></div>' +
+      '<button onclick="cargarHistoricoDash()">Aplicar rango</button>' +
+    '</div>' +
+    '<div id="dash-historico" style="margin-top:12px"></div>' +
+    '<p class="disc" style="margin-top:6px">Usa los filtros de clínicas y fármacos de arriba para acotar las líneas.</p></div>';
+
   html += '<p class="disc">*Ahorro potencial total: suma, por fármaco, de la diferencia entre la opción ' +
     'más cara y la más barata (una unidad de cada uno). Datos reales del arancel particular publicado por ' +
     'cada clínica, soportado por la Ley de Transparencia (Ley 20.285).</p>';
   cont.innerHTML = html;
+  ALL_CLIN = d.todas_clinicas.slice();
+  ALL_FARM = d.todos_farmacos.slice();
+  cargarHistoricoDash();
+}
+
+let ALL_CLIN = [], ALL_FARM = [];
+
+function toggleFiltro(grupo, value, checked) {
+  const all = grupo === "clin" ? ALL_CLIN : ALL_FARM;
+  let cur = (grupo === "clin" ? DASH_CLIN : DASH_FARM);
+  if (cur.length === 0) cur = all.slice();          // estaba "todos"
+  cur = checked ? [...new Set([...cur, value])] : cur.filter(x => x !== value);
+  if (cur.length === all.length) cur = [];          // todos seleccionados = sin filtro
+  if (grupo === "clin") DASH_CLIN = cur; else DASH_FARM = cur;
+  cargarDashboard();
+}
+
+async function cargarHistoricoDash() {
+  const box = document.getElementById("dash-historico");
+  if (!box) return;
+  box.innerHTML = '<p class="disc">Cargando histórico…</p>';
+  const qs = new URLSearchParams();
+  if (DASH_CLIN.length) qs.set("clinicas", DASH_CLIN.join(","));
+  if (DASH_FARM.length) qs.set("farmacos", DASH_FARM.join(","));
+  const desde = document.getElementById("h-desde").value;
+  const hasta = document.getElementById("h-hasta").value;
+  if (desde) qs.set("desde", desde);
+  if (hasta) qs.set("hasta", hasta);
+  let h;
+  try { h = await (await fetch("/dashboard/historico?" + qs.toString())).json(); }
+  catch (e) { box.innerHTML = '<p class="disc">No se pudo cargar el histórico.</p>'; return; }
+  if (!h.lineas.length) { box.innerHTML = '<p class="disc">Sin datos en el rango/seleccion elegidos.</p>'; return; }
+  box.innerHTML = chartHistorico(h.lineas) + leyendaHistorico(h.lineas);
+}
+
+function chartHistorico(lineas) {
+  const W = 720, H = 250, padL = 78, padR = 14, padT = 12, padB = 28;
+  const fechas = [], precios = [];
+  lineas.forEach(l => l.puntos.forEach(p => { fechas.push(+new Date(p.fecha)); precios.push(p.precio_clp); }));
+  const fMin = Math.min(...fechas), fMax = Math.max(...fechas);
+  let pMin = Math.min(...precios), pMax = Math.max(...precios);
+  if (pMin === pMax) { pMin *= 0.93; pMax *= 1.07; } else { const m = (pMax - pMin) * .1; pMin -= m; pMax += m; }
+  const X = f => padL + ((+new Date(f)) - fMin) / (fMax - fMin || 1) * (W - padL - padR);
+  const Y = p => padT + (1 - (p - pMin) / (pMax - pMin)) * (H - padT - padB);
+  let g = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto">';
+  for (let i = 0; i <= 3; i++) {
+    const v = pMin + (pMax - pMin) * i / 3, y = Y(v);
+    g += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" stroke="#e8edf3"/>' +
+      '<text x="' + (padL - 6) + '" y="' + (y + 3) + '" text-anchor="end" font-size="10" fill="#8a93a0">' + fmt(Math.round(v)) + '</text>';
+  }
+  const meses = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+  for (let d = new Date(fMin); +d <= fMax; d.setMonth(d.getMonth() + 1)) {
+    const x = X(d.toISOString().slice(0,10));
+    g += '<text x="' + x + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" fill="#8a93a0">' + meses[d.getMonth()] + '</text>';
+  }
+  lineas.forEach((l, i) => {
+    const col = colorSerie(i);
+    const dash = l.bioequivalente ? ' stroke-dasharray="6 4"' : '';
+    const path = l.puntos.map((p, j) => (j ? "L" : "M") + X(p.fecha).toFixed(1) + " " + Y(p.precio_clp).toFixed(1)).join(" ");
+    g += '<path d="' + path + '" fill="none" stroke="' + col + '" stroke-width="2.2"' + dash + ' stroke-linejoin="round"/>';
+    l.puntos.filter(p => p.fuente === "real").forEach(p => {
+      g += '<circle cx="' + X(p.fecha).toFixed(1) + '" cy="' + Y(p.precio_clp).toFixed(1) + '" r="3" fill="' + col + '"/>';
+    });
+  });
+  return g + '</svg>';
+}
+
+function leyendaHistorico(lineas) {
+  return '<div class="leyenda">' + lineas.map((l, i) =>
+    '<span><i style="background:' + colorSerie(i) + '"></i>' + l.label + '</span>').join("") + '</div>';
 }
 
 function kpi(v, l, cls) {

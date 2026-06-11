@@ -84,13 +84,29 @@ async def get_comparar(principio_activo: str, marca: str | None = None):
     summary="Metricas agregadas para el panel Premium",
     tags=["comparador"],
 )
-async def get_dashboard(email: str | None = None):
-    data = cat.dashboard()
+async def get_dashboard(email: str | None = None,
+                        clinicas: str | None = None, farmacos: str | None = None):
+    cl = [x for x in clinicas.split(",") if x] if clinicas else None
+    fa = [x for x in farmacos.split(",") if x] if farmacos else None
+    data = cat.dashboard(clinicas_sel=cl, farmacos_sel=fa)
     alertas = db.listar_alertas(limit=1000)
     if email:
         alertas = [a for a in alertas if (a.get("email") or "").lower() == email.lower()]
     data["alertas_activas"] = alertas
     return data
+
+
+@router.get(
+    "/dashboard/historico",
+    summary="Series historicas combinadas (filtros y rango de fechas) para el panel",
+    tags=["comparador"],
+)
+async def get_dashboard_historico(clinicas: str | None = None, farmacos: str | None = None,
+                                  desde: str | None = None, hasta: str | None = None):
+    from . import historial as hist
+    cl = [x for x in clinicas.split(",") if x] if clinicas else None
+    fa = [x for x in farmacos.split(",") if x] if farmacos else None
+    return hist.series_dashboard(farmacos=fa, clinicas=cl, desde=desde, hasta=hasta)
 
 
 @router.get(

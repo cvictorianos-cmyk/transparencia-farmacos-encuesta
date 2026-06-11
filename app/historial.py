@@ -128,3 +128,46 @@ def serie_historica(principio_activo: str) -> dict | None:
             + (" Aun sin dias reales registrados." if total_reales == 0 else "")
         ),
     }
+
+
+def series_dashboard(farmacos: list[str] | None = None,
+                     clinicas: list[str] | None = None,
+                     desde: str | None = None, hasta: str | None = None) -> dict:
+    """Series historicas combinadas (1 linea por farmaco+clinica) para el panel.
+
+    Filtra por farmacos, clinicas y rango de fechas [desde, hasta] (YYYY-MM-DD).
+    """
+    fa = {f.strip().lower() for f in farmacos} if farmacos else None
+    cl = {c.strip().lower() for c in clinicas} if clinicas else None
+    d0 = desde or INICIO_BASE.isoformat()
+    d1 = hasta or date.today().isoformat()
+
+    pas = sorted({c["principio_activo"] for c in CATALOGO})
+    if fa:
+        pas = [p for p in pas if p.lower() in fa]
+
+    lineas = []
+    for pa in pas:
+        s = serie_historica(pa)
+        if not s:
+            continue
+        for pres in s["presentaciones"]:
+            for serie in pres["series"]:
+                if cl and serie["clinica"].lower() not in cl:
+                    continue
+                puntos = [pt for pt in serie["puntos"] if d0 <= pt["fecha"] <= d1]
+                if not puntos:
+                    continue
+                lineas.append({
+                    "label": pa.capitalize() + " · " + serie["clinica"]
+                             + (" (bioeq.)" if serie["bioequivalente"] else ""),
+                    "principio_activo": pa,
+                    "clinica": serie["clinica"],
+                    "bioequivalente": serie["bioequivalente"],
+                    "puntos": puntos,
+                })
+    return {
+        "desde": d0, "hasta": d1,
+        "n_lineas": len(lineas),
+        "lineas": lineas,
+    }

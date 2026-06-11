@@ -86,28 +86,34 @@ def generar_reporte_pdf(dash: dict) -> bytes:
     pdf.cell(0, 7, t("Brecha de precio por farmaco"), ln=1)
     pdf.set_font("Helvetica", "", 9)
     pdf.set_text_color(40, 40, 48)
+    def short(c: str) -> str:
+        return (c.replace("Clinica ", "").replace("Universidad de los Andes", "U. Andes"))
     # cabecera tabla
     pdf.set_x(12)
-    pdf.set_font("Helvetica", "B", 8)
+    pdf.set_font("Helvetica", "B", 7)
     pdf.set_fill_color(31, 58, 95)
     pdf.set_text_color(255, 255, 255)
-    pdf.cell(70, 7, t("Farmaco"), border=0, fill=True)
-    pdf.cell(35, 7, t("Mas barato"), border=0, fill=True, align="R")
-    pdf.cell(35, 7, t("Mas caro"), border=0, fill=True, align="R")
-    pdf.cell(20, 7, t("Brecha"), border=0, fill=True, align="R")
-    pdf.cell(26, 7, t("Ahorro"), border=0, fill=True, align="R", ln=1)
+    pdf.cell(40, 7, t("Farmaco"), border=0, fill=True)
+    pdf.cell(38, 7, t("Mas economica"), border=0, fill=True)
+    pdf.cell(20, 7, t("Tipo"), border=0, fill=True)
+    pdf.cell(34, 7, t("Mas cara"), border=0, fill=True)
+    pdf.cell(16, 7, t("Brecha"), border=0, fill=True, align="R")
+    pdf.cell(38, 7, t("Ahorro"), border=0, fill=True, align="R", ln=1)
     pdf.set_text_color(40, 40, 48)
-    pdf.set_font("Helvetica", "", 8)
+    pdf.set_font("Helvetica", "", 7)
     fill = False
     for x in dash["ranking_brecha"]:
         nombre = x.get("nombre") or x["principio_activo"].capitalize()
+        barata = short(x.get("clinica_mas_barata", "")) + " (" + _clp(x["precio_min_clp"]) + ")"
+        cara = short(x.get("clinica_mas_cara", "")) + " (" + _clp(x["precio_max_clp"]) + ")"
         pdf.set_x(12)
         pdf.set_fill_color(244, 246, 249)
-        pdf.cell(70, 6, t(nombre), fill=fill)
-        pdf.cell(35, 6, t(_clp(x["precio_min_clp"])), align="R", fill=fill)
-        pdf.cell(35, 6, t(_clp(x["precio_max_clp"])), align="R", fill=fill)
-        pdf.cell(20, 6, t(str(x["ahorro_pct"]) + "%"), align="R", fill=fill)
-        pdf.cell(26, 6, t(_clp(x["ahorro_clp"])), align="R", fill=fill, ln=1)
+        pdf.cell(40, 6, t(nombre), fill=fill)
+        pdf.cell(38, 6, t(barata), fill=fill)
+        pdf.cell(20, 6, t(x.get("tipo_mas_barata", "")), fill=fill)
+        pdf.cell(34, 6, t(cara), fill=fill)
+        pdf.cell(16, 6, t(str(x["ahorro_pct"]) + "%"), align="R", fill=fill)
+        pdf.cell(38, 6, t(_clp(x["ahorro_clp"])), align="R", fill=fill, ln=1)
         fill = not fill
 
     # Biosimilares
@@ -132,8 +138,7 @@ def generar_reporte_pdf(dash: dict) -> bytes:
     pdf.set_text_color(*GRIS)
     pdf.set_font("Helvetica", "I", 7)
     pdf.multi_cell(186, 4, t("Reporte generado automaticamente. No constituye una cotizacion "
-                  "formal. Clinica Santa Maria y Clinica Alemana no publican el valor particular "
-                  "de estos farmacos. Contacto: transparenciaoncologica@gmail.com"))
+                  "formal. Contacto: transparenciaoncologica@gmail.com"))
 
     out = pdf.output()
     return bytes(out)

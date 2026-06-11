@@ -43,11 +43,11 @@ FECHA_DATOS = "2026-06 (arancel particular, horario habil)"
 CATEGORIAS_POR_PA = {
     "pembrolizumab": ["Mama"],
     "daratumumab": ["Mieloma múltiple"],
-    "nivolumab": ["Pulmón", "Melanoma", "Renal", "Estómago"],
-    "bevacizumab": ["Colon", "Pulmón", "Renal", "Ovario"],
+    "nivolumab": ["Pulmón", "Riñón", "Estómago"],
+    "bevacizumab": ["Colon", "Pulmón", "Riñón", "Ovario"],
     "rituximab": ["Linfoma", "Leucemia"],
     "cetuximab": ["Colon", "Cabeza y cuello"],
-    "ipilimumab": ["Melanoma", "Renal"],
+    "ipilimumab": ["Riñón"],
 }
 
 # Emoji por categoria (para las tarjetas de la primera pagina).
@@ -55,7 +55,7 @@ CATEGORIAS_POR_PA = {
 # pulmones/riñon/corazon que no renderizan en Windows 10).
 _CAT_ICON = {
     "Mama": "🎀", "Pulmón": "🌬️", "Colon": "🧬", "Estómago": "🍽️", "Próstata": "🧔",
-    "Melanoma": "🧴", "Renal": "🧫", "Vejiga": "💧", "Ovario": "🌸",
+    "Riñón": "🧫", "Vejiga": "💧", "Ovario": "🌸",
     "Linfoma": "🩸", "Leucemia": "🩸", "Mieloma múltiple": "🦴",
     "Cabeza y cuello": "👤",
 }
@@ -371,8 +371,16 @@ def exportar_filas() -> list[dict]:
     return filas
 
 
-def dashboard() -> dict:
-    """Metricas agregadas del catalogo para el panel Premium."""
+def dashboard(clinicas_sel: list[str] | None = None,
+              farmacos_sel: list[str] | None = None) -> dict:
+    """Metricas agregadas del catalogo para el panel Premium.
+
+    clinicas_sel : si se entrega, solo considera esas clinicas.
+    farmacos_sel : si se entrega, solo considera esos principios activos.
+    """
+    cl_f = {c.strip().lower() for c in clinicas_sel} if clinicas_sel else None
+    fa_f = {f.strip().lower() for f in farmacos_sel} if farmacos_sel else None
+
     clinicas = set()
     brechas = []          # ahorro_pct por caso (marca vs marca + biosimilares)
     ahorros_clp = []      # ahorro absoluto por caso
@@ -382,7 +390,12 @@ def dashboard() -> dict:
     n_ofertas = 0
 
     for c in CATALOGO:
-        ofertas = c["ofertas"]
+        if fa_f and _slug(c["principio_activo"]) not in fa_f:
+            continue
+        ofertas = [o for o in c["ofertas"]
+                   if not cl_f or o["clinica"].lower() in cl_f]
+        if not ofertas:
+            continue
         n_ofertas += len(ofertas)
         for o in ofertas:
             clinicas.add(o["clinica"])
@@ -395,6 +408,7 @@ def dashboard() -> dict:
         brechas.append(ahorro_pct)
         ahorros_clp.append(ahorro)
         barata = min(ofertas, key=lambda o: o["precio"])
+        cara = max(ofertas, key=lambda o: o["precio"])
         # nombre unico por presentacion (evita confundir las 2 de daratumumab)
         otras_pres = sum(1 for x in CATALOGO if x["principio_activo"] == c["principio_activo"])
         nombre = c["principio_activo"].capitalize()
@@ -409,6 +423,8 @@ def dashboard() -> dict:
             "precio_min_clp": pmin,
             "precio_max_clp": pmax,
             "clinica_mas_barata": barata["clinica"],
+            "clinica_mas_cara": cara["clinica"],
+            "tipo_mas_barata": "Bioequivalente" if barata["bioequivalente"] else "Original",
         })
         marcas = [o["precio"] for o in ofertas if not o["bioequivalente"]]
         bios = [o["precio"] for o in ofertas if o["bioequivalente"]]
@@ -437,6 +453,9 @@ def dashboard() -> dict:
         "ranking_brecha": por_farmaco,
         "biosimilares": biosimilares,
         "fecha_datos": FECHA_DATOS,
+        "todas_clinicas": list(CLINICAS),
+        "todos_farmacos": sorted({c["principio_activo"] for c in CATALOGO}),
+        "filtros": {"clinicas": clinicas_sel or [], "farmacos": farmacos_sel or []},
     }
 
 
