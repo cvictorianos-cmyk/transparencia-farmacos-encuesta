@@ -116,33 +116,15 @@ async def get_dashboard_historico(clinicas: str | None = None, farmacos: str | N
 )
 async def dashboard_export_csv():
     from . import historial as hist
-    filas_snapshot = cat.exportar_filas()
-    # historico real recolectado (si existe)
-    hist_rows = hist._leer_csv() if hasattr(hist, "_leer_csv") else []
+    filas = hist.filas_export()  # serie historica completa (todas las fechas)
     buf = io.StringIO()
     cols = ["fecha", "categoria", "principio_activo", "marca", "presentacion",
             "clinica", "nombre_en_clinica", "empresa_isp", "tipo",
-            "precio_particular_clp", "moneda", "fuente"]
+            "precio_particular_clp", "moneda", "origen", "fuente"]
     w = csv.DictWriter(buf, fieldnames=cols)
     w.writeheader()
-    for f in filas_snapshot:
+    for f in filas:
         w.writerow(f)
-    # anexar historico real (columnas distintas -> filas simples)
-    for r in hist_rows:
-        w.writerow({
-            "fecha": r.get("fecha", ""),
-            "categoria": "",
-            "principio_activo": r.get("principio_activo", ""),
-            "marca": "",
-            "presentacion": "",
-            "clinica": r.get("clinica", ""),
-            "nombre_en_clinica": r.get("glosa", ""),
-            "empresa_isp": "",
-            "tipo": "",
-            "precio_particular_clp": r.get("precio_clp", ""),
-            "moneda": "CLP",
-            "fuente": "Historico diario",
-        })
     buf.seek(0)
     return StreamingResponse(
         iter([buf.getvalue()]), media_type="text/csv",

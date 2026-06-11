@@ -41,6 +41,18 @@ CLINICAS = [
 
 FECHA_DATOS = "2026-06 (arancel particular, horario habil)"
 
+# Pagina/arancel publico de cada clinica (para la columna "fuente" del export).
+CLINICA_URL = {
+    "Clinica INDISA": "https://www.indisa.cl/aranceles-buscador?param=medicamentos",
+    "Clinica Davila": "https://www.davila.cl/aranceles",
+    "Clinica Universidad de los Andes": "https://www.clinicauandes.cl/aranceles",
+    "UC Marcoleta": "https://aranceles.ucchristus.cl/",
+    "UC San Carlos": "https://aranceles.ucchristus.cl/",
+    "Clinica Santa Maria": "https://www.clinicasantamaria.cl/aranceles",
+    "Clinica Alemana": "https://www.clinicaalemana.cl/aranceles/list/insumos-y-medicamentos",
+    "FALP": "https://www.falp.org/aranceles/",
+}
+
 # Categorias clinicas (tipo de cancer / area) a las que se asocia cada principio
 # activo, segun sus indicaciones. Un farmaco puede pertenecer a varias.
 CATEGORIAS_POR_PA = {
@@ -454,7 +466,10 @@ def dashboard(clinicas_sel: list[str] | None = None,
             "precio_max_clp": pmax,
             "clinica_mas_barata": barata["clinica"],
             "clinica_mas_cara": cara["clinica"],
+            "glosa_mas_barata": barata["glosa"],
+            "glosa_mas_cara": cara["glosa"],
             "tipo_mas_barata": "Bioequivalente" if barata["bioequivalente"] else "Original",
+            "tipo_mas_cara": "Bioequivalente" if cara["bioequivalente"] else "Original",
         })
         marcas = [o["precio"] for o in ofertas if not o["bioequivalente"]]
         bios = [o["precio"] for o in ofertas if o["bioequivalente"]]

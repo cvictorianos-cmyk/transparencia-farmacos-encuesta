@@ -130,6 +130,61 @@ def serie_historica(principio_activo: str) -> dict | None:
     }
 
 
+def _puntos_oferta(o: dict, pa: str, filas_csv: list[dict]) -> list[tuple]:
+    """Serie (fecha, precio, fuente) de una oferta: base + reales del CSV."""
+    hoy = date.today()
+    reales = sorted(
+        ((r["fecha"], int(r["precio_clp"])) for r in filas_csv
+         if _match(r, o, pa) and r.get("fecha") and r.get("precio_clp")),
+        key=lambda t: t[0],
+    )
+    primera_real = date.fromisoformat(reales[0][0]) if reales else hoy + timedelta(days=1)
+    puntos = []
+    d = INICIO_BASE
+    while d < primera_real and d <= hoy:
+        puntos.append((d.isoformat(), o["precio"], "base"))
+        d += timedelta(days=PASO_BASE_DIAS)
+    ultimo = min(primera_real - timedelta(days=1), hoy)
+    if puntos and puntos[-1][0] != ultimo.isoformat() and ultimo >= INICIO_BASE:
+        puntos.append((ultimo.isoformat(), o["precio"], "base"))
+    for f, p in reales:
+        puntos.append((f, p, "real"))
+    return puntos
+
+
+def filas_export() -> list[dict]:
+    """Filas largas (1 por oferta y por fecha) para la descarga CSV / ERP.
+
+    Incluye TODAS las fechas: linea base (desde enero 2026) y cada dia de
+    recoleccion real. Asi el archivo muestra la evolucion historica completa.
+    """
+    from .catalogo import CATALOGO, CLINICA_URL, _empresa, categorias_de
+    filas_csv = _leer_csv()
+    out = []
+    for c in CATALOGO:
+        pa = _slug(c["principio_activo"])
+        cats = "; ".join(categorias_de(pa))
+        for o in c["ofertas"]:
+            for fecha, precio, fuente in _puntos_oferta(o, pa, filas_csv):
+                out.append({
+                    "fecha": fecha,
+                    "categoria": cats,
+                    "principio_activo": c["principio_activo"],
+                    "marca": c["marca"],
+                    "presentacion": c["presentacion"],
+                    "clinica": o["clinica"],
+                    "nombre_en_clinica": o["glosa"],
+                    "empresa_isp": _empresa(o["glosa"]),
+                    "tipo": "Bioequivalente" if o["bioequivalente"] else "Original",
+                    "precio_particular_clp": precio,
+                    "moneda": "CLP",
+                    "origen": "Recoleccion diaria" if fuente == "real" else "Linea base (precio actual)",
+                    "fuente": CLINICA_URL.get(o["clinica"], ""),
+                })
+    out.sort(key=lambda r: (r["principio_activo"], r["clinica"], r["fecha"]))
+    return out
+
+
 def series_dashboard(farmacos: list[str] | None = None,
                      clinicas: list[str] | None = None,
                      desde: str | None = None, hasta: str | None = None) -> dict:

@@ -29,8 +29,8 @@ def generar_reporte_pdf(dash: dict) -> bytes:
     GRIS = (90, 100, 112)
     VERDE = (27, 138, 90)
 
-    pdf = FPDF(orientation="P", unit="mm", format="A4")
-    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf = FPDF(orientation="L", unit="mm", format="A4")  # horizontal (landscape)
+    pdf.set_auto_page_break(auto=True, margin=14)
     pdf.add_page()
 
     def t(s: str) -> str:
@@ -38,9 +38,16 @@ def generar_reporte_pdf(dash: dict) -> bytes:
         return (s.replace("—", "-").replace("–", "-").replace("•", "-")
                  .encode("latin-1", "replace").decode("latin-1"))
 
+    def short(c: str) -> str:
+        return (c.replace("Clinica ", "").replace("Universidad de los Andes", "U. Andes"))
+
+    def clip(s: str, n: int) -> str:
+        s = s or ""
+        return s if len(s) <= n else s[:n - 1] + "."
+
     # Encabezado
     pdf.set_fill_color(*AZUL)
-    pdf.rect(0, 0, 210, 26, "F")
+    pdf.rect(0, 0, 297, 26, "F")
     pdf.set_xy(12, 7)
     pdf.set_text_color(255, 255, 255)
     pdf.set_font("Helvetica", "B", 16)
@@ -50,70 +57,68 @@ def generar_reporte_pdf(dash: dict) -> bytes:
     pdf.cell(0, 6, t("Reporte ejecutivo de precios - " + date.today().isoformat()), ln=1)
 
     pdf.set_text_color(*GRIS)
-    pdf.set_xy(12, 32)
+    pdf.set_xy(12, 30)
     pdf.set_font("Helvetica", "", 9)
-    pdf.multi_cell(186, 5, t("Datos: " + dash.get("fecha_datos", "") +
+    pdf.multi_cell(273, 5, t("Datos: " + dash.get("fecha_datos", "") +
                   ". Precios reales del arancel particular publicado por cada clinica, "
                   "soportado por la Ley de Transparencia (Ley 20.285) en Chile."))
 
     # KPIs
-    y = 48
+    y = 42
     kpis = [
         (str(dash["n_farmacos"]), "Farmacos"),
         (str(dash["n_clinicas"]), "Clinicas"),
         (str(dash["brecha_promedio_pct"]) + "%", "Brecha promedio"),
         (_clp(dash["ahorro_potencial_total_clp"]), "Ahorro potencial"),
     ]
-    w = 45
+    w = 64
     for i, (v, l) in enumerate(kpis):
-        x = 12 + i * (w + 2)
+        x = 12 + i * (w + 3)
         pdf.set_fill_color(244, 246, 249)
-        pdf.rect(x, y, w, 20, "F")
+        pdf.rect(x, y, w, 18, "F")
         pdf.set_xy(x, y + 3)
         pdf.set_text_color(*AZUL)
         pdf.set_font("Helvetica", "B", 13)
         pdf.cell(w, 7, t(v), align="C")
-        pdf.set_xy(x, y + 12)
+        pdf.set_xy(x, y + 11)
         pdf.set_text_color(*GRIS)
         pdf.set_font("Helvetica", "", 7)
         pdf.cell(w, 4, t(l), align="C")
 
-    # Ranking de brecha
-    y = 76
+    # Ranking de brecha (con glosa, tipo y precio de la mas economica y la mas cara)
+    y = 66
     pdf.set_xy(12, y)
     pdf.set_text_color(*AZUL)
     pdf.set_font("Helvetica", "B", 11)
-    pdf.cell(0, 7, t("Brecha de precio por farmaco"), ln=1)
-    pdf.set_font("Helvetica", "", 9)
-    pdf.set_text_color(40, 40, 48)
-    def short(c: str) -> str:
-        return (c.replace("Clinica ", "").replace("Universidad de los Andes", "U. Andes"))
+    pdf.cell(0, 7, t("Comparacion por farmaco: opcion mas economica vs mas cara"), ln=1)
     # cabecera tabla
+    cols = [("Farmaco", 26), ("Nombre mas economica", 55), ("Tipo", 18),
+            ("Precio min", 24), ("Nombre mas cara", 55), ("Tipo", 18),
+            ("Precio max", 24), ("Brecha", 15), ("Ahorro", 22)]
     pdf.set_x(12)
-    pdf.set_font("Helvetica", "B", 7)
+    pdf.set_font("Helvetica", "B", 6.5)
     pdf.set_fill_color(31, 58, 95)
     pdf.set_text_color(255, 255, 255)
-    pdf.cell(40, 7, t("Farmaco"), border=0, fill=True)
-    pdf.cell(38, 7, t("Mas economica"), border=0, fill=True)
-    pdf.cell(20, 7, t("Tipo"), border=0, fill=True)
-    pdf.cell(34, 7, t("Mas cara"), border=0, fill=True)
-    pdf.cell(16, 7, t("Brecha"), border=0, fill=True, align="R")
-    pdf.cell(38, 7, t("Ahorro"), border=0, fill=True, align="R", ln=1)
+    for label, cw in cols:
+        align = "R" if label in ("Precio min", "Precio max", "Brecha", "Ahorro") else "L"
+        pdf.cell(cw, 7, t(label), border=0, fill=True, align=align,
+                 ln=1 if label == "Ahorro" else 0)
     pdf.set_text_color(40, 40, 48)
-    pdf.set_font("Helvetica", "", 7)
+    pdf.set_font("Helvetica", "", 6.5)
     fill = False
     for x in dash["ranking_brecha"]:
         nombre = x.get("nombre") or x["principio_activo"].capitalize()
-        barata = short(x.get("clinica_mas_barata", "")) + " (" + _clp(x["precio_min_clp"]) + ")"
-        cara = short(x.get("clinica_mas_cara", "")) + " (" + _clp(x["precio_max_clp"]) + ")"
         pdf.set_x(12)
         pdf.set_fill_color(244, 246, 249)
-        pdf.cell(40, 6, t(nombre), fill=fill)
-        pdf.cell(38, 6, t(barata), fill=fill)
-        pdf.cell(20, 6, t(x.get("tipo_mas_barata", "")), fill=fill)
-        pdf.cell(34, 6, t(cara), fill=fill)
-        pdf.cell(16, 6, t(str(x["ahorro_pct"]) + "%"), align="R", fill=fill)
-        pdf.cell(38, 6, t(_clp(x["ahorro_clp"])), align="R", fill=fill, ln=1)
+        pdf.cell(26, 6, t(clip(nombre, 22)), fill=fill)
+        pdf.cell(55, 6, t(short(x.get("clinica_mas_barata", "")) + " - " + clip(x.get("glosa_mas_barata", ""), 34)), fill=fill)
+        pdf.cell(18, 6, t(x.get("tipo_mas_barata", "")[:12]), fill=fill)
+        pdf.cell(24, 6, t(_clp(x["precio_min_clp"])), align="R", fill=fill)
+        pdf.cell(55, 6, t(short(x.get("clinica_mas_cara", "")) + " - " + clip(x.get("glosa_mas_cara", ""), 34)), fill=fill)
+        pdf.cell(18, 6, t(x.get("tipo_mas_cara", "")[:12]), fill=fill)
+        pdf.cell(24, 6, t(_clp(x["precio_max_clp"])), align="R", fill=fill)
+        pdf.cell(15, 6, t(str(x["ahorro_pct"]) + "%"), align="R", fill=fill)
+        pdf.cell(22, 6, t(_clp(x["ahorro_clp"])), align="R", fill=fill, ln=1)
         fill = not fill
 
     # Biosimilares
@@ -137,7 +142,7 @@ def generar_reporte_pdf(dash: dict) -> bytes:
     pdf.set_x(12)
     pdf.set_text_color(*GRIS)
     pdf.set_font("Helvetica", "I", 7)
-    pdf.multi_cell(186, 4, t("Reporte generado automaticamente. No constituye una cotizacion "
+    pdf.multi_cell(273, 4, t("Reporte generado automaticamente. No constituye una cotizacion "
                   "formal. Contacto: transparenciaoncologica@gmail.com"))
 
     out = pdf.output()

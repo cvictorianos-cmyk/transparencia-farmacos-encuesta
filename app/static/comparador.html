@@ -233,6 +233,12 @@
                      background:var(--azul); color:#fff; border-radius:10px; padding:12px;
                      font-weight:700; font-size:.85rem; }
   .dash-dl .dl-btn.pdf { background:var(--oro); }
+  #dash-historico { position:relative; }
+  .h-tip { position:absolute; z-index:20; background:#1c2430; color:#fff; border-radius:8px;
+           padding:7px 10px; font-size:.74rem; pointer-events:none; max-width:200px;
+           box-shadow:0 4px 14px rgba(0,0,0,.25); line-height:1.35; }
+  .h-tip .tp { font-weight:800; font-size:.9rem; color:#9fe0c0; }
+  .h-tip .tf { opacity:.7; font-size:.66rem; }
   /* popup encuesta */
   .promo .modal { text-align:center; }
   .promo .regalo { font-size:2.2rem; }
@@ -849,12 +855,6 @@ async function cargarDashboard() {
   });
   html += '</div></div>';
 
-  // Botones de descarga (ERP / reporte)
-  html += '<div class="dash-dl">' +
-    '<a class="dl-btn" href="/dashboard/export.csv" download>⬇️ Descargar datos (CSV para ERP)</a>' +
-    '<a class="dl-btn pdf" href="/dashboard/reporte.pdf" target="_blank">📄 Reporte ejecutivo (PDF)</a>' +
-    '</div>';
-
   // Alertas activas
   const al = d.alertas_activas || [];
   html += '<div class="dash-card"><h3>🔔 Alertas activas (' + al.length + ')</h3>';
@@ -920,6 +920,13 @@ async function cargarDashboard() {
   html += '<p class="disc">*Ahorro potencial total: suma, por fármaco, de la diferencia entre la opción ' +
     'más cara y la más barata (una unidad de cada uno). Datos reales del arancel particular publicado por ' +
     'cada clínica, soportado por la Ley de Transparencia (Ley 20.285).</p>';
+
+  // Descargas (al final de la página)
+  html += '<div class="dash-card"><h3>⬇️ Descargas y reportes</h3>' +
+    '<div class="dash-dl">' +
+    '<a class="dl-btn" href="/dashboard/export.csv" download>⬇️ Descargar datos históricos (CSV para ERP)</a>' +
+    '<a class="dl-btn pdf" href="/dashboard/reporte.pdf" target="_blank">📄 Reporte ejecutivo (PDF horizontal)</a>' +
+    '</div></div>';
   cont.innerHTML = html;
   ALL_CLIN = d.todas_clinicas.slice();
   ALL_FARM = d.todos_farmacos.slice();
@@ -954,6 +961,7 @@ async function cargarHistoricoDash() {
   catch (e) { box.innerHTML = '<p class="disc">No se pudo cargar el histórico.</p>'; return; }
   if (!h.lineas.length) { box.innerHTML = '<p class="disc">Sin datos en el rango/seleccion elegidos.</p>'; return; }
   box.innerHTML = chartHistorico(h.lineas) + leyendaHistorico(h.lineas);
+  wireTooltipHistorico();
 }
 
 function chartHistorico(lineas) {
@@ -981,11 +989,39 @@ function chartHistorico(lineas) {
     const dash = l.bioequivalente ? ' stroke-dasharray="6 4"' : '';
     const path = l.puntos.map((p, j) => (j ? "L" : "M") + X(p.fecha).toFixed(1) + " " + Y(p.precio_clp).toFixed(1)).join(" ");
     g += '<path d="' + path + '" fill="none" stroke="' + col + '" stroke-width="2.2"' + dash + ' stroke-linejoin="round"/>';
-    l.puntos.filter(p => p.fuente === "real").forEach(p => {
-      g += '<circle cx="' + X(p.fecha).toFixed(1) + '" cy="' + Y(p.precio_clp).toFixed(1) + '" r="3" fill="' + col + '"/>';
+    // un punto en CADA fecha; los de recolección real más grandes
+    l.puntos.forEach(p => {
+      const real = p.fuente === "real";
+      const r = real ? 3.4 : 2;
+      g += '<circle class="hpt" cx="' + X(p.fecha).toFixed(1) + '" cy="' + Y(p.precio_clp).toFixed(1) +
+        '" r="' + r + '" fill="' + (real ? col : "#fff") + '" stroke="' + col + '" stroke-width="' + (real ? 0 : 1.4) +
+        '" data-f="' + p.fecha + '" data-p="' + p.precio_clp + '" data-l="' + l.label.replace(/"/g, "") +
+        '" data-fuente="' + (real ? "Precio recolectado" : "Línea base (precio actual)") + '" style="cursor:pointer"/>';
     });
   });
   return g + '</svg>';
+}
+
+function wireTooltipHistorico() {
+  const box = document.getElementById("dash-historico");
+  if (!box) return;
+  let tip = box.querySelector(".h-tip");
+  if (!tip) { tip = document.createElement("div"); tip.className = "h-tip hidden"; box.appendChild(tip); }
+  box.querySelectorAll("circle.hpt").forEach(c => {
+    c.addEventListener("mouseenter", e => {
+      const f = c.getAttribute("data-f"), p = +c.getAttribute("data-p");
+      tip.innerHTML = '<b>' + c.getAttribute("data-l") + '</b><br>' + f + '<br>' +
+        '<span class="tp">' + fmt(p) + '</span><br><span class="tf">' + c.getAttribute("data-fuente") + '</span>';
+      tip.classList.remove("hidden");
+    });
+    c.addEventListener("mousemove", e => {
+      const r = box.getBoundingClientRect();
+      let x = e.clientX - r.left + 12, y = e.clientY - r.top + 12;
+      if (x > r.width - 150) x = e.clientX - r.left - 150;
+      tip.style.left = x + "px"; tip.style.top = y + "px";
+    });
+    c.addEventListener("mouseleave", () => tip.classList.add("hidden"));
+  });
 }
 
 function leyendaHistorico(lineas) {
