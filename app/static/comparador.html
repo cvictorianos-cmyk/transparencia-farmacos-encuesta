@@ -54,7 +54,8 @@
           cursor:pointer; transition:.12s; text-align:left; }
   .caso:hover, .caso:focus { border-color:var(--azul2); box-shadow:0 2px 8px rgba(0,0,0,.07); outline:none; }
   .caso .pa { font-weight:700; color:var(--azul); text-transform:capitalize; font-size:.95rem; }
-  .caso .marca { font-size:.78rem; color:var(--gris); margin:2px 0 8px; }
+  .caso .marca { font-size:.78rem; color:var(--gris); margin:2px 0 0; }
+  .caso .pres { font-size:.68rem; color:var(--gris); margin:0 0 8px; opacity:.8; }
   .caso .min { font-size:.95rem; font-weight:700; }
   .caso .ahorro { font-size:.72rem; color:var(--ok); margin-top:3px; }
   .bio { display:inline-block; font-size:.65rem; background:var(--okbg); color:var(--ok);
@@ -576,6 +577,16 @@ function imgFarmaco(pa) {
     '</svg>';
 }
 
+function presLabel(presentacion) {
+  if (!presentacion) return "";
+  const p = presentacion.toLowerCase();
+  // Resumen corto para distinguir presentaciones de un mismo farmaco/marca
+  // (ej. venta por comprimido vs. caja completa).
+  if (p.includes("venta por unidad")) return "Por unidad / comprimido";
+  if (p.includes("venta por caja")) return "Caja completa";
+  return presentacion;
+}
+
 function pintarLista(items) {
   const cont = document.getElementById("casos");
   const vacio = document.getElementById("sin-resultados");
@@ -589,6 +600,7 @@ function pintarLista(items) {
       '<div class="img">' + imgFarmaco(c.principio_activo) + '</div>' +
       '<div class="pa">' + c.principio_activo + '</div>' +
       '<div class="marca">' + c.marca + '</div>' +
+      '<div class="pres">' + presLabel(c.presentacion) + '</div>' +
       '<div class="min">desde ' + fmt(c.precio_min_clp) + '</div>' +
       '<div class="ahorro">Ahorra hasta ' + fmt(c.ahorro_max_clp) +
         ' (' + c.ahorro_max_pct + '%)</div>' +
