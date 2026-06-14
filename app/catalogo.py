@@ -63,6 +63,12 @@ CATEGORIAS_POR_PA = {
     "rituximab": ["Linfoma", "Leucemia"],
     "cetuximab": ["Colon", "Cabeza y cuello"],
     "ipilimumab": ["Riñón"],
+    "tamoxifeno": ["Mama"],
+    "letrozol": ["Mama"],
+    "trastuzumab": ["Mama"],
+    "trastuzumab emtansina": ["Mama"],
+    "pertuzumab/trastuzumab": ["Mama"],
+    "imatinib": ["Leucemia"],
 }
 
 # Emoji por categoria (para las tarjetas de la primera pagina).
@@ -126,6 +132,17 @@ _EMPRESAS_ISP = [
     ("TIMOGLOBULINA", "Sanofi (Genzyme)"),
     ("BEVACIZUMAB", "Roche Chile Ltda."),   # glosas sin marca (Avastin de referencia)
     ("RITUXIMAB", "Roche Chile Ltda."),     # glosas sin marca (Mabthera de referencia)
+    ("HERZUMA", "Celltrion Healthcare Chile S.p.A."),   # biosimilar trastuzumab
+    ("KADCYLA", "Roche Chile Ltda."),
+    ("PHESGO", "Roche Chile Ltda."),
+    ("PERTU", "Roche Chile Ltda."),
+    ("HERCEPTIN", "Roche Chile Ltda."),
+    ("BISINTEX", "Bio-Sintex (titular por verificar)"),  # biosimilar trastuzumab
+    ("TRASTUZUMAB", "Roche Chile Ltda."),   # glosas sin marca (Herceptin de referencia)
+    ("FEMARA", "Novartis Chile S.A."),
+    ("NOLVADEX", "AstraZeneca Chile S.A."),
+    ("GLIVEC", "Novartis Chile S.A."),
+    ("TIADIS", "Tiadis Pharma S.A."),       # laboratorio del generico Letrozol
 ]
 
 
@@ -283,6 +300,169 @@ CATALOGO: list[dict] = [
             _o("Clinica Santa Maria", "YERVOY 50 MG (IPILIMUMAB) (65380003)", 3_994_979),
             _o("Clinica Alemana", "YERVOY 50 MG/10 ML INYECTABLE (500829600)", 4_181_041),
             _o("FALP", "IPILIMUMAB 50 MG/10 ML FA (10400215)", 3_085_503),
+        ],
+    },
+    # ------------------------------------------------------------------
+    # Incorporados jun-2026: Tamoxifeno, Letrozol, Trastuzumab e Imatinib.
+    # Precios REALES obtenidos en vivo via los scrapers de INDISA (API
+    # GraphQL), Clinica Davila y Clinica U. de los Andes (Playwright).
+    # Clinica Santa Maria no publica estos farmacos en su buscador; Clinica
+    # Alemana no respondio durante la extraccion (sitio con timeout). UC
+    # Marcoleta/San Carlos y FALP quedan pendientes (no tienen scraper
+    # propio, se cargan manualmente como el resto del catalogo).
+    #
+    # NOTA DE UNIDADES: Tamoxifeno, Letrozol e Imatinib son orales y cada
+    # clinica publica una unidad de venta distinta (comprimido individual
+    # vs. caja). Para no mezclar unidades en una misma comparacion, cada
+    # unidad de venta se modela como una "presentacion" propia (igual
+    # criterio que las 2 presentaciones de daratumumab). La glosa de cada
+    # oferta indica la unidad exacta reportada por la clinica.
+    # ------------------------------------------------------------------
+    {
+        "principio_activo": "tamoxifeno",
+        "marca": "Tamoxifeno 20 mg (Nolvadex / generico)",
+        "indicacion": "Cancer de mama hormonosensible (terapia endocrina adyuvante)",
+        "titular": "AstraZeneca / multiples titulares genericos",
+        "registro_isp": "Por verificar (registrosanitario.ispch.gob.cl)",
+        "presentacion": "Comprimido 20 mg (venta por unidad)",
+        "ofertas": [
+            _o("Clinica INDISA", "TAMOXIFENO 20 MG COMP", 1_282),
+        ],
+    },
+    {
+        "principio_activo": "tamoxifeno",
+        "marca": "Tamoxifeno 20 mg (Nolvadex / generico)",
+        "indicacion": "Cancer de mama hormonosensible (terapia endocrina adyuvante)",
+        "titular": "AstraZeneca / multiples titulares genericos",
+        "registro_isp": "Por verificar (registrosanitario.ispch.gob.cl)",
+        "presentacion": "Caja x 30 comprimidos 20 mg (venta por caja)",
+        "ofertas": [
+            _o("Clinica Davila", "TAMOXIFENO 20 MG. CAJA 30 COMP.", 158_957),
+            _o("Clinica Universidad de los Andes", "NOLVADEX TAMOXIFENO 20 MG", 48_810),
+            _o("Clinica Universidad de los Andes", "TAMOXIFENO 20 MG / 30 CMP", 43_312, bioeq=True),
+        ],
+    },
+    {
+        "principio_activo": "letrozol",
+        "marca": "Letrozol 2,5 mg (Femara / generico)",
+        "indicacion": "Cancer de mama hormonosensible, postmenopausia (inhibidor de aromatasa)",
+        "titular": "Novartis / multiples titulares genericos",
+        "registro_isp": "Por verificar (registrosanitario.ispch.gob.cl)",
+        "presentacion": "Comprimido 2,5 mg (venta por unidad)",
+        "ofertas": [
+            _o("Clinica INDISA", "FEMARA 2,5MG (INDISA HOGAR)", 17_211),
+        ],
+    },
+    {
+        "principio_activo": "letrozol",
+        "marca": "Letrozol 2,5 mg (Femara / generico)",
+        "indicacion": "Cancer de mama hormonosensible, postmenopausia (inhibidor de aromatasa)",
+        "titular": "Novartis / multiples titulares genericos",
+        "registro_isp": "Por verificar (registrosanitario.ispch.gob.cl)",
+        "presentacion": "Caja x 30 comprimidos 2,5 mg (venta por caja)",
+        "ofertas": [
+            _o("Clinica Davila", "LETROZOL 2,5 MG (TIADIS) CAJA 30 COMP.", 69_802, bioeq=True),
+            _o("Clinica Universidad de los Andes", "LETROZOL CMP 2,5 MG/ 30 CMP", 278_262, bioeq=True),
+        ],
+    },
+    {
+        "principio_activo": "trastuzumab",
+        "marca": "Herceptin IV 440 mg",
+        "indicacion": "Cancer de mama y gastrico HER2-positivo (formulacion intravenosa)",
+        "titular": "Roche",
+        "registro_isp": "Por verificar (registrosanitario.ispch.gob.cl)",
+        "presentacion": "Vial 440 mg liofilizado para perfusion",
+        "ofertas": [
+            _o("Clinica INDISA", "HERCEPTIN 440 MG FCO INY", 3_748_431),
+            _o("Clinica INDISA", "TRASTUZUMAB 440MG/50 ML (HERCEPTIN)", 3_150_990),
+            _o("Clinica INDISA", "TRASTUZUMAB 440 MG (HERZUMA) INY FRASCO", 1_147_224, bioeq=True),
+            _o("Clinica Davila", "TRASTUZUMAB 440 MG EV FCO AMP 1 UNI", 1_801_250),
+            _o("Clinica Universidad de los Andes", "TRASTUZUMAB FAM 440 MG LIOF", 2_519_244),
+            _o("Clinica Universidad de los Andes", "TRASTUZUMAB 440MG EV (BISINTEX)", 1_611_295, bioeq=True),
+        ],
+    },
+    {
+        "principio_activo": "trastuzumab",
+        "marca": "Herceptin SC 600 mg",
+        "indicacion": "Cancer de mama HER2-positivo (formulacion subcutanea)",
+        "titular": "Roche",
+        "registro_isp": "Por verificar (registrosanitario.ispch.gob.cl)",
+        "presentacion": "Vial 600 mg/5 mL solucion subcutanea",
+        "ofertas": [
+            _o("Clinica INDISA", "TRASTUZUMAB 600 MG/5ML SC (HERCEPTIN)", 2_898_491),
+            _o("Clinica Davila", "TRASTUZUMAB 600 MG SC (HERCEPTIN) JERING", 2_532_250),
+            _o("Clinica Universidad de los Andes", "TRASTUZUMAB JER 600 MG SC", 2_772_900),
+        ],
+    },
+    {
+        "principio_activo": "trastuzumab emtansina",
+        "marca": "Kadcyla 100 mg",
+        "indicacion": "Cancer de mama HER2-positivo, post-tratamiento (conjugado anticuerpo-farmaco)",
+        "titular": "Roche",
+        "registro_isp": "Por verificar (registrosanitario.ispch.gob.cl)",
+        "presentacion": "Vial 100 mg liofilizado para perfusion",
+        "ofertas": [
+            _o("Clinica Davila", "TRASTUZUMAB EMTANSINE 100 MG.(KADCYLA) A", 1_925_560),
+            _o("Clinica Universidad de los Andes", "TRASTUZUMAB EMTANSINE 100 MG", 2_443_500),
+        ],
+    },
+    {
+        "principio_activo": "trastuzumab emtansina",
+        "marca": "Kadcyla 160 mg",
+        "indicacion": "Cancer de mama HER2-positivo, post-tratamiento (conjugado anticuerpo-farmaco)",
+        "titular": "Roche",
+        "registro_isp": "Por verificar (registrosanitario.ispch.gob.cl)",
+        "presentacion": "Vial 160 mg liofilizado para perfusion",
+        "ofertas": [
+            _o("Clinica INDISA", "TRASTUZUMAB EMTANSINA (KADCYLA) 160 MG", 3_677_718),
+            _o("Clinica Davila", "TRASTUZUMAB EMTANSINE 160 MG.(KADCYLA) A", 3_103_550),
+            _o("Clinica Universidad de los Andes", "TRASTUZUMAB EMTANSINE 160 MG FAM", 3_779_820),
+        ],
+    },
+    {
+        "principio_activo": "pertuzumab/trastuzumab",
+        "marca": "Phesgo 600/600 mg",
+        "indicacion": "Cancer de mama HER2-positivo (combinacion fija pertuzumab + trastuzumab, subcutanea)",
+        "titular": "Roche",
+        "registro_isp": "Por verificar (registrosanitario.ispch.gob.cl)",
+        "presentacion": "Vial combo 600 mg/600 mg solucion subcutanea",
+        "ofertas": [
+            _o("Clinica INDISA", "PHESGO 600/600 (PERTU/TRASTUZUMAB)", 3_848_317),
+            _o("Clinica Davila", "PERTUZUMAB/TRASTUZUMAB 600/600MG (PHESGO)", 3_962_790),
+            _o("Clinica Davila", "PERTUZUMAB/TRASTUZUMAB 1200/600MG (PHESGO)", 3_962_790),
+        ],
+    },
+    {
+        "principio_activo": "imatinib",
+        "marca": "Imatinib 100 mg (Glivec / generico)",
+        "indicacion": "Leucemia mieloide cronica y tumores GIST (inhibidor BCR-ABL/c-KIT)",
+        "titular": "Novartis / multiples titulares genericos",
+        "registro_isp": "Por verificar (registrosanitario.ispch.gob.cl)",
+        "presentacion": "Caja x 60 comprimidos 100 mg (venta por caja)",
+        "ofertas": [
+            _o("Clinica Universidad de los Andes", "IMATINIB 100 MG 60 CMP", 1_152_022, bioeq=True),
+        ],
+    },
+    {
+        "principio_activo": "imatinib",
+        "marca": "Imatinib 400 mg (Glivec / generico)",
+        "indicacion": "Leucemia mieloide cronica y tumores GIST (inhibidor BCR-ABL/c-KIT)",
+        "titular": "Novartis / multiples titulares genericos",
+        "registro_isp": "Por verificar (registrosanitario.ispch.gob.cl)",
+        "presentacion": "Comprimido recubierto 400 mg (venta por unidad)",
+        "ofertas": [
+            _o("Clinica Universidad de los Andes", "IMATINIB MESILATO CMP REC 400 MG", 171_398, bioeq=True),
+        ],
+    },
+    {
+        "principio_activo": "imatinib",
+        "marca": "Imatinib 400 mg (Glivec / generico)",
+        "indicacion": "Leucemia mieloide cronica y tumores GIST (inhibidor BCR-ABL/c-KIT)",
+        "titular": "Novartis / multiples titulares genericos",
+        "registro_isp": "Por verificar (registrosanitario.ispch.gob.cl)",
+        "presentacion": "Caja x 30 comprimidos 400 mg (venta por caja)",
+        "ofertas": [
+            _o("Clinica Universidad de los Andes", "IMATINIB 400 MG X 30 CMP", 2_203_712),
         ],
     },
 ]
