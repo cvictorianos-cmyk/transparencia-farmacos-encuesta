@@ -324,22 +324,12 @@ CATALOGO: list[dict] = [
         "indicacion": "Cancer de mama hormonosensible (terapia endocrina adyuvante)",
         "titular": "AstraZeneca / multiples titulares genericos",
         "registro_isp": "Por verificar (registrosanitario.ispch.gob.cl)",
-        "presentacion": "Comprimido 20 mg (venta por unidad)",
+        "presentacion": "Comprimido 20 mg (precio normalizado por comprimido)",
         "ofertas": [
-            _o("Clinica INDISA", "TAMOXIFENO 20 MG COMP", 1_282),
-        ],
-    },
-    {
-        "principio_activo": "tamoxifeno",
-        "marca": "Tamoxifeno 20 mg (Nolvadex / generico)",
-        "indicacion": "Cancer de mama hormonosensible (terapia endocrina adyuvante)",
-        "titular": "AstraZeneca / multiples titulares genericos",
-        "registro_isp": "Por verificar (registrosanitario.ispch.gob.cl)",
-        "presentacion": "Caja x 30 comprimidos 20 mg (venta por caja)",
-        "ofertas": [
-            _o("Clinica Davila", "TAMOXIFENO 20 MG. CAJA 30 COMP.", 158_957),
-            _o("Clinica Universidad de los Andes", "NOLVADEX TAMOXIFENO 20 MG", 48_810),
-            _o("Clinica Universidad de los Andes", "TAMOXIFENO 20 MG / 30 CMP", 43_312, bioeq=True),
+            _o("Clinica INDISA", "TAMOXIFENO 20 MG COMP (por comprimido)", 1_282),
+            _o("Clinica Davila", "TAMOXIFENO 20 MG CAJA 30 -> por comprimido", 5_299),
+            _o("Clinica Universidad de los Andes", "NOLVADEX TAMOXIFENO 20 MG CAJA 30 -> por comprimido", 1_627),
+            _o("Clinica Universidad de los Andes", "TAMOXIFENO 20 MG / 30 CMP -> por comprimido", 1_444, bioeq=True),
         ],
     },
     {
@@ -348,21 +338,11 @@ CATALOGO: list[dict] = [
         "indicacion": "Cancer de mama hormonosensible, postmenopausia (inhibidor de aromatasa)",
         "titular": "Novartis / multiples titulares genericos",
         "registro_isp": "Por verificar (registrosanitario.ispch.gob.cl)",
-        "presentacion": "Comprimido 2,5 mg (venta por unidad)",
+        "presentacion": "Comprimido 2,5 mg (precio normalizado por comprimido)",
         "ofertas": [
-            _o("Clinica INDISA", "FEMARA 2,5MG (INDISA HOGAR)", 17_211),
-        ],
-    },
-    {
-        "principio_activo": "letrozol",
-        "marca": "Letrozol 2,5 mg (Femara / generico)",
-        "indicacion": "Cancer de mama hormonosensible, postmenopausia (inhibidor de aromatasa)",
-        "titular": "Novartis / multiples titulares genericos",
-        "registro_isp": "Por verificar (registrosanitario.ispch.gob.cl)",
-        "presentacion": "Caja x 30 comprimidos 2,5 mg (venta por caja)",
-        "ofertas": [
-            _o("Clinica Davila", "LETROZOL 2,5 MG (TIADIS) CAJA 30 COMP.", 69_802, bioeq=True),
-            _o("Clinica Universidad de los Andes", "LETROZOL CMP 2,5 MG/ 30 CMP", 278_262, bioeq=True),
+            _o("Clinica INDISA", "FEMARA 2,5 MG (INDISA HOGAR) (por comprimido)", 17_211),
+            _o("Clinica Davila", "LETROZOL 2,5 MG (TIADIS) CAJA 30 -> por comprimido", 2_327, bioeq=True),
+            _o("Clinica Universidad de los Andes", "LETROZOL 2,5 MG / 30 CMP -> por comprimido", 9_275, bioeq=True),
         ],
     },
     {
@@ -449,20 +429,10 @@ CATALOGO: list[dict] = [
         "indicacion": "Leucemia mieloide cronica y tumores GIST (inhibidor BCR-ABL/c-KIT)",
         "titular": "Novartis / multiples titulares genericos",
         "registro_isp": "Por verificar (registrosanitario.ispch.gob.cl)",
-        "presentacion": "Comprimido recubierto 400 mg (venta por unidad)",
+        "presentacion": "Comprimido recubierto 400 mg (precio normalizado por comprimido)",
         "ofertas": [
-            _o("Clinica Universidad de los Andes", "IMATINIB MESILATO CMP REC 400 MG", 171_398, bioeq=True),
-        ],
-    },
-    {
-        "principio_activo": "imatinib",
-        "marca": "Imatinib 400 mg (Glivec / generico)",
-        "indicacion": "Leucemia mieloide cronica y tumores GIST (inhibidor BCR-ABL/c-KIT)",
-        "titular": "Novartis / multiples titulares genericos",
-        "registro_isp": "Por verificar (registrosanitario.ispch.gob.cl)",
-        "presentacion": "Caja x 30 comprimidos 400 mg (venta por caja)",
-        "ofertas": [
-            _o("Clinica Universidad de los Andes", "IMATINIB 400 MG X 30 CMP", 2_203_712),
+            _o("Clinica Universidad de los Andes", "IMATINIB MESILATO CMP REC 400 MG (por comprimido)", 171_398, bioeq=True),
+            _o("Clinica Universidad de los Andes", "IMATINIB 400 MG X 30 CMP -> por comprimido", 73_457),
         ],
     },
 ]

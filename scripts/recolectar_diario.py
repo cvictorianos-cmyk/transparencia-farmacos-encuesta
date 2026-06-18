@@ -194,6 +194,59 @@ def recolectar_uc(client: httpx.Client) -> list[dict]:
     return _dedup(filas)
 
 
+SCRAPER_CLINICA = {
+    "davila": "Clinica Davila",
+    "santa_maria": "Clinica Santa Maria",
+    "alemana": "Clinica Alemana",
+}
+
+
+def recolectar_navegador() -> list[dict]:
+    """OPCION B: captura las clinicas SPA (Davila, Santa Maria, Alemana) via
+    navegador headless (Playwright), reutilizando los scrapers del benchmark.
+    Mas lento y fragil que las fuentes HTTP (riesgo de bloqueo); por eso el job
+    es semanal. FALP queda manual: solo publica PDF y no tiene scraper.
+    Si Playwright no esta instalado, se omite sin romper la recoleccion HTTP."""
+    try:
+        import asyncio
+        from scrapers import CLINIC_SCRAPERS
+    except Exception as e:
+        print(f"  navegador: Playwright/scrapers no disponibles ({e}); se omite.", file=sys.stderr)
+        return []
+
+    filas: list[dict] = []
+
+    async def _run():
+        for key, cname in SCRAPER_CLINICA.items():
+            ScraperCls = CLINIC_SCRAPERS.get(key)
+            if not ScraperCls:
+                continue
+            try:
+                async with ScraperCls() as sc:
+                    for d in DROGAS:
+                        for term in terminos_busqueda(d):
+                            try:
+                                res = await asyncio.wait_for(sc.search(term), timeout=70)
+                            except Exception as e:
+                                print(f"  {key} '{term}': {e}", file=sys.stderr)
+                                continue
+                            for r in res or []:
+                                glosa = _norm(r.get("nombre_prestacion"))
+                                precio = _precio_int(r.get("precio_particular_clp"))
+                                if glosa and precio and _match_droga(glosa, d):
+                                    filas.append({"clinica": cname, "principio_activo": d,
+                                                  "glosa": glosa, "precio_clp": precio})
+            except Exception as e:
+                print(f"  {key}: error iniciando scraper ({e})", file=sys.stderr)
+
+    try:
+        asyncio.run(_run())
+    except Exception as e:
+        print(f"  navegador: error general ({e})", file=sys.stderr)
+    return _dedup(filas)
+
+
+
 def main() -> int:
     hoy = date.today().isoformat()
     CSV_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -214,6 +267,9 @@ def main() -> int:
         nuevas += recolectar_uandes(client)
         print("Recolectando UC CHRISTUS (x2 centros)...")
         nuevas += recolectar_uc(client)
+
+    print("Recolectando clinicas SPA via navegador (Davila/Santa Maria/Alemana)...")
+    nuevas += recolectar_navegador()
 
     if not nuevas:
         print("ADVERTENCIA: no se recolecto ningun precio (¿sitios caidos?).", file=sys.stderr)
