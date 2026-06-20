@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # historia completa: necesaria para rebasear antes del push
 
       - name: Python
         uses: actions/setup-python@v5
@@ -44,5 +46,16 @@ jobs:
             echo "Sin cambios que commitear."
           else
             git commit -m "Registro semanal de precios $(date -u +%F)"
-            git push
+            # Si main avanzo desde el checkout (ej. otro push concurrente),
+            # rebasea sobre el remoto y reintenta el push hasta 3 veces.
+            for intento in 1 2 3; do
+              if git pull --rebase --autostash origin main && git push; then
+                echo "Push OK (intento $intento)."
+                exit 0
+              fi
+              echo "Push rechazado (intento $intento); reintentando en 5s..."
+              sleep 5
+            done
+            echo "No se pudo pushear tras 3 intentos." >&2
+            exit 1
           fi
