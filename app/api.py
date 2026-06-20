@@ -125,9 +125,10 @@ async def dashboard_export_csv():
     w.writeheader()
     for f in filas:
         w.writerow(f)
-    buf.seek(0)
+    # BOM utf-8 para que Excel muestre bien los acentos (Pulmón, Riñón, etc.)
+    contenido = "﻿" + buf.getvalue()
     return StreamingResponse(
-        iter([buf.getvalue()]), media_type="text/csv",
+        iter([contenido]), media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": "attachment; filename=transparencia_precios.csv"},
     )
 

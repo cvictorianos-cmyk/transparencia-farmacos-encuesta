@@ -1,10 +1,12 @@
-name: Recolector diario de precios
+name: Recolector semanal de precios
 
-# Corre todos los dias a las 10:00 UTC (06:00 Chile, hora habil temprana)
-# y tambien se puede lanzar a mano desde la pestaña Actions de GitHub.
+# OPCION A (Hernan #13): captura ASINCRONA, no "en vivo". Los aranceles no
+# cambian a diario, asi que se recolecta una vez por semana (lunes 06:00 Chile).
+# Esto reduce el riesgo de bloqueo por parte de los sitios fuente.
+# Tambien se puede lanzar a mano desde la pestaña Actions de GitHub.
 on:
   schedule:
-    - cron: "0 10 * * *"
+    - cron: "0 10 * * 1"   # lunes 10:00 UTC = 06:00 Chile
   workflow_dispatch:
 
 permissions:
@@ -22,10 +24,15 @@ jobs:
         with:
           python-version: "3.12"
 
+      # OPCION B: ademas de las fuentes HTTP, se capturan las clinicas SPA
+      # (Davila, Santa Maria, Alemana) via navegador headless (Playwright).
+      # FALP queda manual (solo publica PDF, sin scraper).
       - name: Dependencias
-        run: pip install httpx
+        run: |
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
 
-      - name: Recolectar precios del dia
+      - name: Recolectar precios de la semana
         run: python scripts/recolectar_diario.py
 
       - name: Commit del historial
@@ -36,6 +43,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "Sin cambios que commitear."
           else
-            git commit -m "Registro diario de precios $(date -u +%F)"
+            git commit -m "Registro semanal de precios $(date -u +%F)"
             git push
           fi
