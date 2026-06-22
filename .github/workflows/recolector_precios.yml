@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: write
+  issues: write   # para abrir alertas como GitHub Issues (cambios de precio / fallos)
 
 jobs:
   recolectar:
@@ -58,4 +59,54 @@ jobs:
             done
             echo "No se pudo pushear tras 3 intentos." >&2
             exit 1
+          fi
+
+      # ALERTA 1: cambios de precio. Compara la captura nueva con la anterior y,
+      # si hay CUALQUIER variacion (o ofertas nuevas), abre un Issue con el detalle.
+      - name: Detectar cambios de precio
+        id: cambios
+        run: |
+          python scripts/detectar_cambios.py > cambios.md
+          if [ -s cambios.md ]; then
+            echo "hay=true" >> "$GITHUB_OUTPUT"
+            echo "Se detectaron cambios; se abrira un issue."
+            cat cambios.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "hay=false" >> "$GITHUB_OUTPUT"
+            echo "Sin cambios de precio respecto a la captura anterior."
+          fi
+
+      - name: Abrir issue de cambios de precio
+        if: steps.cambios.outputs.hay == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create cambio-precio --color 0E8A16 --description "Variacion detectada en el historial de precios" --force >/dev/null 2>&1 || true
+          gh issue create \
+            --title "Cambios de precio detectados ($(date -u +%F))" \
+            --label cambio-precio \
+            --body-file cambios.md
+
+      # ALERTA 2: si CUALQUIER paso anterior fallo, abre (o comenta) un Issue de
+      # fallo con el enlace al run, para no depender solo del correo de GitHub.
+      - name: Alerta si el job falla
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          HOY="$(date -u +%F)"
+          gh label create recolector-fallo --color B60205 --description "El recolector de precios fallo" --force >/dev/null 2>&1 || true
+          EXISTE="$(gh issue list --label recolector-fallo --state open --json number --jq '.[0].number')"
+          if [ -n "$EXISTE" ]; then
+            gh issue comment "$EXISTE" --body "Nuevo fallo del recolector el $HOY. Ver run: $RUN_URL"
+          else
+            gh issue create \
+              --title "Fallo el recolector de precios" \
+              --label recolector-fallo \
+              --body "El workflow de recoleccion de precios fallo el $HOY.
+
+          Revisa el run y el paso en rojo: $RUN_URL
+
+          Causas tipicas: una clinica dejo de responder, cambio su sitio, o bloqueo la IP del runner. Este issue se reutiliza para fallos sucesivos (se agregan comentarios)."
           fi
