@@ -340,8 +340,8 @@
       <span class="tag">PUBLICIDAD</span>
       Seguros oncológicos · Cotiza tu cobertura complementaria y conoce planes con copago preferente.
     </div>
-    <div id="alert-lista" class="alertbox hidden">
-      🔔 <b>Tus alertas activas:</b> 3 fármacos con baja de precio esta semana. Sin publicidad.
+    <div id="alert-lista" class="alertbox hidden" onclick="irAAlertas()" style="cursor:pointer" title="Ver tus alertas">
+      <span id="alert-lista-txt">🔔 <b>Tus alertas activas</b></span>
     </div>
 
     <!-- Toggle de vista: por tipo de cancer / por farmaco -->
@@ -473,6 +473,30 @@ async function loginPremium() {
 }
 function goPremium() { PREMIUM_OK ? setPlan("prem") : abrirLogin(); }
 
+// Banner de alertas en la home (Premium): refleja el numero REAL de alertas
+// (mismo dato que el dashboard) y, al hacer clic, lleva al panel o al cotizador.
+let ALERTAS_N = 0;
+async function actualizarBannerAlertas() {
+  const el = document.getElementById("alert-lista-txt");
+  if (!el) return;
+  try {
+    const r = await (await fetch("/alertas")).json();
+    ALERTAS_N = (r.alertas || []).length;
+  } catch (e) { ALERTAS_N = 0; }
+  if (ALERTAS_N > 0) {
+    const plural = ALERTAS_N === 1 ? "" : "s";
+    el.innerHTML = '🔔 <b>Tienes ' + ALERTAS_N + ' alerta' + plural + ' activa' + plural +
+      '</b> de baja de precio · <u>ver en el panel →</u>';
+  } else {
+    el.innerHTML = '🔔 <b>No tienes alertas activas.</b> ' +
+      'Crea una y te avisamos por email si baja un precio · <u>crear alerta →</u>';
+  }
+}
+function irAAlertas() {
+  if (ALERTAS_N > 0) verSeccion("dash");
+  else verSeccion("cotiza");
+}
+
 function setPlan(p) {
   if (p === "prem" && !PREMIUM_OK) { abrirLogin(); return; }
   PLAN = p;
@@ -483,6 +507,7 @@ function setPlan(p) {
   badge.textContent = p === "free" ? "VERSIÓN GRATUITA" : "PREMIUM";
   document.getElementById("ad-lista").classList.toggle("hidden", p !== "free");
   document.getElementById("alert-lista").classList.toggle("hidden", p !== "prem");
+  if (p === "prem") actualizarBannerAlertas();
   const nd = document.getElementById("nav-dash");
   if (nd) nd.classList.toggle("hidden", !(p === "prem" && PREMIUM_OK));
   if (PA_ACTUAL && !document.getElementById("vista-det").classList.contains("hidden")) {
