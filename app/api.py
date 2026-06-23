@@ -110,6 +110,19 @@ async def get_dashboard_historico(clinicas: str | None = None, farmacos: str | N
 
 
 @router.get(
+    "/dashboard/bajas",
+    summary="Bajas de precio entre dos fechas configurables (Premium)",
+    tags=["comparador"],
+)
+async def get_dashboard_bajas(desde: str | None = None, hasta: str | None = None,
+                              clinicas: str | None = None, farmacos: str | None = None):
+    from . import historial as hist
+    cl = [x for x in clinicas.split(",") if x] if clinicas else None
+    fa = [x for x in farmacos.split(",") if x] if farmacos else None
+    return hist.bajas_precio(desde=desde, hasta=hasta, farmacos=fa, clinicas=cl)
+
+
+@router.get(
     "/dashboard/export.csv",
     summary="Descarga el historico/snapshot de precios para analisis (ERP)",
     tags=["comparador"],

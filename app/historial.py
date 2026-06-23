@@ -226,3 +226,80 @@ def series_dashboard(farmacos: list[str] | None = None,
         "n_lineas": len(lineas),
         "lineas": lineas,
     }
+
+
+def _precio_efectivo(puntos: list[dict], fecha_iso: str, lado: str):
+    """Precio vigente en una fecha. 'ini': ultimo punto <= fecha (o el primero
+    si la fecha es anterior a toda la serie). 'fin': ultimo punto <= fecha."""
+    previos = [pt for pt in puntos if pt["fecha"] <= fecha_iso]
+    if previos:
+        return previos[-1]
+    if lado == "ini" and puntos:
+        return puntos[0]
+    return None
+
+
+def bajas_precio(desde: str | None = None, hasta: str | None = None,
+                 farmacos: list[str] | None = None, clinicas: list[str] | None = None,
+                 solo_bajas: bool = True) -> dict:
+    """Detecta BAJAS de precio entre [desde, hasta] por oferta (clinica+glosa).
+
+    Compara el precio vigente al inicio del rango contra el vigente al final.
+    Por defecto el rango es 1-ene-2026 -> hoy, configurable por el usuario
+    Premium. Devuelve las ofertas cuyo precio bajo, ordenadas por % de baja.
+    """
+    fa = {f.strip().lower() for f in farmacos} if farmacos else None
+    cl = {c.strip().lower() for c in clinicas} if clinicas else None
+    d0 = desde or INICIO_BASE.isoformat()
+    d1 = hasta or date.today().isoformat()
+    if d0 > d1:
+        d0, d1 = d1, d0
+
+    pas = sorted({c["principio_activo"] for c in CATALOGO})
+    if fa:
+        pas = [p for p in pas if p.lower() in fa]
+
+    bajas = []
+    for pa in pas:
+        s = serie_historica(pa)
+        if not s:
+            continue
+        for pres in s["presentaciones"]:
+            for serie in pres["series"]:
+                if cl and serie["clinica"].lower() not in cl:
+                    continue
+                puntos = serie["puntos"]
+                if not puntos:
+                    continue
+                ini = _precio_efectivo(puntos, d0, "ini")
+                fin = _precio_efectivo(puntos, d1, "fin")
+                if not ini or not fin:
+                    continue
+                p0, p1 = ini["precio_clp"], fin["precio_clp"]
+                if p0 <= 0:
+                    continue
+                delta = p1 - p0
+                if solo_bajas and delta >= 0:
+                    continue
+                bajas.append({
+                    "principio_activo": pa,
+                    "clinica": serie["clinica"],
+                    "glosa": serie["glosa"],
+                    "marca": pres["marca"],
+                    "bioequivalente": serie["bioequivalente"],
+                    "precio_inicio_clp": p0,
+                    "precio_fin_clp": p1,
+                    "fecha_inicio": ini["fecha"],
+                    "fecha_fin": fin["fecha"],
+                    "baja_abs_clp": -delta,                       # positivo: cuanto bajo
+                    "baja_pct": round(delta / p0 * 100, 1),       # negativo
+                    "fuente_fin": fin.get("fuente", ""),
+                })
+
+    bajas.sort(key=lambda x: x["baja_pct"])  # la baja mas fuerte primero
+    return {
+        "desde": d0, "hasta": d1,
+        "n_bajas": len(bajas),
+        "ahorro_total_clp": sum(b["baja_abs_clp"] for b in bajas),
+        "bajas": bajas,
+    }
