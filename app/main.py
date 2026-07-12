@@ -1,5 +1,4 @@
 """Entrypoint de la API FastAPI."""
-import base64
 import logging
 import os
 import secrets
@@ -40,40 +39,27 @@ async def _startup():
     init_db()
 
 
-# === Proteccion con usuario y contraseña (HTTP Basic) durante el desarrollo ===
-# Credenciales configurables via variables de entorno en Render (AUTH_USER / AUTH_PASS).
+# === Autenticacion ===
+# El acceso inicial al sitio es publico (el HTTP Basic global fue retirado
+# de forma definitiva para la presentacion del 13-jul-2026).
+#
+# MODO_DEMO controla el login de la version Premium:
+#   - "1" (por defecto): Premium se activa SIN usuario ni contraseña (demo).
+#   - "0": /premium/login vuelve a exigir credenciales (AUTH_USER / AUTH_PASS).
+# Para reactivar el login Premium despues de la defensa: cambiar el valor por
+# defecto a "0" aqui, o definir MODO_DEMO=0 como variable de entorno en Render.
+MODO_DEMO = os.environ.get("MODO_DEMO", "1") != "0"
+
+# Credenciales del login Premium, configurables via variables de entorno en Render.
 AUTH_USER = os.environ.get("AUTH_USER", "carlos")
 AUTH_PASS = os.environ.get("AUTH_PASS", "Transparencia2026")
 
-# Rutas publicas: /health (healthcheck de Render), /encuesta (QR del censo)
-# y /premium/login (valida sus propias credenciales).
-_RUTAS_PUBLICAS = ("/health", "/encuesta", "/premium/login")
 
-
-@app.middleware("http")
-async def basic_auth_middleware(request: Request, call_next):
-    path = request.url.path
-    if any(path == r or path.startswith(r + "/") for r in _RUTAS_PUBLICAS):
-        return await call_next(request)
-    auth = request.headers.get("authorization", "")
-    if auth.lower().startswith("basic "):
-        try:
-            decoded = base64.b64decode(auth.split(" ", 1)[1]).decode("utf-8")
-            user, _, pwd = decoded.partition(":")
-            if secrets.compare_digest(user, AUTH_USER) and secrets.compare_digest(pwd, AUTH_PASS):
-                return await call_next(request)
-        except Exception:
-            pass
-    return Response(
-        status_code=401,
-        headers={"WWW-Authenticate": 'Basic realm="TransparenciaRx (acceso restringido)"'},
-        content="Acceso restringido: ingresa usuario y contrasena.",
-    )
-
-
-# Login de la version Premium del comparador (mismas credenciales por ahora).
+# Login de la version Premium del comparador.
 @app.post("/premium/login")
 async def premium_login(request: Request):
+    if MODO_DEMO:
+        return {"ok": True, "plan": "premium", "demo": True}
     try:
         body = await request.json()
     except Exception:
