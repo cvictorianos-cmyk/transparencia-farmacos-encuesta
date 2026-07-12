@@ -1309,18 +1309,4 @@ async function activarAlerta() {
     body: JSON.stringify({
       email, principio_activo: COTIZACION_ACTUAL.pa, dosis_mg: COTIZACION_ACTUAL.dosis,
       veces: COTIZACION_ACTUAL.veces, cobertura_pct: COTIZACION_ACTUAL.cob,
-      precio_referencia_clp: COTIZACION_ACTUAL.mejor.costo_total_clp
-    })
-  });
-  msg.textContent = r.ok ? "🔔 Alerta activada: te avisaremos por email si baja el precio."
-                         : "No se pudo activar la alerta.";
-}
-
-// === Popup encuesta (se abre desde el boton del header, no automaticamente) ===
-function abrirPromo() { document.getElementById("modal-encuesta").classList.remove("hidden"); }
-function cerrarPromo() { document.getElementById("modal-encuesta").classList.add("hidden"); }
-
-cargar();
-</script>
-</body>
-</html>
+      preci
