@@ -432,11 +432,29 @@ let CASOS = [], PLAN = "free", PA_ACTUAL = null, PREMIUM_OK = false;
 const FREE_N = 3; // clinicas visibles en plan gratuito
 
 // === Login Premium ===
-function abrirLogin() {
+// Si el backend esta en MODO_DEMO, /premium/login acepta credenciales vacias
+// y Premium se activa sin mostrar el modal. Si el login esta reactivado
+// (MODO_DEMO=0), el backend responde 401 y se muestra el modal como siempre.
+async function abrirLogin() {
   if (PREMIUM_OK) { setPlan(PLAN === "prem" ? "free" : "prem"); return; }
+  try {
+    const r = await fetch("/premium/login", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({usuario: "", contrasena: ""})
+    });
+    if (r.ok) { activarPremium(""); return; }
+  } catch (e) {}
   document.getElementById("err-login").classList.add("hidden");
   document.getElementById("modal-login").classList.remove("hidden");
   document.getElementById("lg-user").focus();
+}
+function activarPremium(usuario) {
+  PREMIUM_OK = true;
+  cerrarLogin();
+  const b = document.getElementById("login-btn");
+  b.textContent = "★ Premium activo" + (usuario ? " · " + usuario : "");
+  b.classList.add("logged");
+  setPlan("prem");
 }
 function togglePass() {
   const inp = document.getElementById("lg-pass");
@@ -459,15 +477,7 @@ async function loginPremium() {
       method: "POST", headers: {"Content-Type": "application/json"},
       body: JSON.stringify({usuario, contrasena})
     });
-    if (r.ok) {
-      PREMIUM_OK = true;
-      cerrarLogin();
-      const b = document.getElementById("login-btn");
-      b.textContent = "★ Premium activo · " + usuario;
-      b.classList.add("logged");
-      setPlan("prem");
-      return;
-    }
+    if (r.ok) { activarPremium(usuario); return; }
   } catch (e) {}
   document.getElementById("err-login").classList.remove("hidden");
 }
