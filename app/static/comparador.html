@@ -878,6 +878,13 @@ async function cargarDashboard() {
   try { d = await (await fetch("/dashboard?" + qs.toString())).json(); }
   catch (e) { cont.innerHTML = '<p class="disc">No se pudo cargar el panel.</p>'; return; }
 
+  // Seleccion de farmaco: uno a la vez. En la primera carga se fija el primero por defecto.
+  if (d.todos_farmacos && d.todos_farmacos.length && DASH_FARM.length !== 1) {
+    DASH_FARM = [d.todos_farmacos[0]];
+    cargarDashboard();
+    return;
+  }
+
   let html = '<h2 style="color:var(--azul);margin:6px 0 2px">📊 Panel Premium</h2>' +
     '<p class="disc" style="margin:0 0 10px">Inteligencia de precios oncológicos · ' + d.fecha_datos + '</p>';
 
@@ -888,11 +895,11 @@ async function cargarDashboard() {
     html += '<label><input type="checkbox" ' + (ck ? "checked" : "") +
       ' onchange="toggleFiltro(\'clin\',this.value,this.checked)" value="' + c + '">' + f2(c) + '</label>';
   });
-  html += '</div><h4>Filtrar fármacos</h4><div class="chk-group">';
+  html += '</div><h4>Filtrar fármaco (uno a la vez)</h4><div class="chk-group">';
   d.todos_farmacos.forEach(p => {
-    const ck = DASH_FARM.length === 0 || DASH_FARM.includes(p);
-    html += '<label><input type="checkbox" ' + (ck ? "checked" : "") +
-      ' onchange="toggleFiltro(\'farm\',this.value,this.checked)" value="' + p +
+    const ck = DASH_FARM.includes(p);
+    html += '<label><input type="radio" name="filtro-farm" ' + (ck ? "checked" : "") +
+      ' onchange="seleccionarFarmaco(this.value)" value="' + p +
       '" style="text-transform:capitalize">' + p + '</label>';
   });
   html += '</div></div>';
@@ -1021,6 +1028,11 @@ async function cargarBajasDash() {
 }
 
 let ALL_CLIN = [], ALL_FARM = [];
+
+function seleccionarFarmaco(value) {
+  DASH_FARM = [value];   // siempre un solo farmaco seleccionado
+  cargarDashboard();
+}
 
 function toggleFiltro(grupo, value, checked) {
   const all = grupo === "clin" ? ALL_CLIN : ALL_FARM;
