@@ -280,12 +280,10 @@
 </head>
 <body>
 <header>
-  <div class="topbar">
-    <button id="login-btn" class="login-btn" onclick="abrirLogin()">🔐 Premium · Iniciar sesión</button>
-  </div>
+  <div class="topbar"></div>
   <h1>Transparencia Oncológica Clínica</h1>
   <p>Comparador de fármacos oncológicos · Clínicas de Chile</p>
-  <span id="plan-badge" class="plan-badge free">VERSIÓN GRATUITA</span>
+  <span id="plan-badge" class="plan-badge prem">PREMIUM</span>
 </header>
 
 <nav class="nav">
@@ -325,10 +323,6 @@
 </div>
 
 <div class="wrap">
-  <div class="toggle">
-    <button id="btn-free" class="act-free" onclick="setPlan('free')">Gratuita</button>
-    <button id="btn-prem" onclick="setPlan('prem')">Premium · $4.990/mes</button>
-  </div>
 
   <!-- Vista lista -->
   <div id="vista-lista">
@@ -428,7 +422,8 @@
 <script>
 const fmt = n => "$" + (n ?? 0).toLocaleString("es-CL");
 const f2 = c => c.replace("Clinica ", "").replace("Universidad de los Andes", "U. Andes");
-let CASOS = [], PLAN = "free", PA_ACTUAL = null, PREMIUM_OK = false;
+// Vista unica Premium: sin toggle de planes ni login (todas las clinicas visibles).
+let CASOS = [], PLAN = "prem", PA_ACTUAL = null, PREMIUM_OK = true;
 const FREE_N = 3; // clinicas visibles en plan gratuito
 
 // === Login Premium ===
@@ -452,8 +447,10 @@ function activarPremium(usuario) {
   PREMIUM_OK = true;
   cerrarLogin();
   const b = document.getElementById("login-btn");
-  b.textContent = "★ Premium activo" + (usuario ? " · " + usuario : "");
-  b.classList.add("logged");
+  if (b) {
+    b.textContent = "★ Premium activo" + (usuario ? " · " + usuario : "");
+    b.classList.add("logged");
+  }
   setPlan("prem");
 }
 function togglePass() {
@@ -510,8 +507,6 @@ function irAAlertas() {
 function setPlan(p) {
   if (p === "prem" && !PREMIUM_OK) { abrirLogin(); return; }
   PLAN = p;
-  document.getElementById("btn-free").className = p === "free" ? "act-free" : "";
-  document.getElementById("btn-prem").className = p === "prem" ? "act-prem" : "";
   const badge = document.getElementById("plan-badge");
   badge.className = "plan-badge " + (p === "free" ? "free" : "prem");
   badge.textContent = p === "free" ? "VERSIÓN GRATUITA" : "PREMIUM";
@@ -1320,6 +1315,7 @@ async function activarAlerta() {
 function abrirPromo() { document.getElementById("modal-encuesta").classList.remove("hidden"); }
 function cerrarPromo() { document.getElementById("modal-encuesta").classList.add("hidden"); }
 
+setPlan("prem");
 cargar();
 </script>
 </body>
