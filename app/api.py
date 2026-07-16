@@ -3,11 +3,14 @@ from __future__ import annotations
 import csv
 import hashlib
 import io
+import os
+import secrets
 from collections import Counter
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, Response, StreamingResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from .benchmark import ejecutar_benchmark
 from .config import BASE_DIR
@@ -18,6 +21,30 @@ from . import catalogo as cat
 from scrapers import CLINIC_SCRAPERS, ISPChileScraper
 
 router = APIRouter()
+
+# === Autenticacion Basic para descargas y reportes ===
+# Credenciales configurables via variables de entorno (Render), con valores por defecto.
+_security = HTTPBasic()
+_EXPORT_USER = os.environ.get("EXPORT_USER", "cvictoriano")
+_EXPORT_PASS = os.environ.get("EXPORT_PASS", "transparencia2026")
+
+
+def requiere_credenciales(credentials: HTTPBasicCredentials = Depends(_security)) -> str:
+    """Protege endpoints de descarga/reporte con usuario y contrasena (HTTP Basic).
+
+    Usa secrets.compare_digest para evitar ataques de timing.
+    El navegador muestra el dialogo nativo de login al acceder al enlace.
+    """
+    user_ok = secrets.compare_digest(credentials.username.encode(), _EXPORT_USER.encode())
+    pass_ok = secrets.compare_digest(credentials.password.encode(), _EXPORT_PASS.encode())
+    if not (user_ok and pass_ok):
+        raise HTTPException(
+            status_code=401,
+            detail="Usuario o contrasena incorrectos",
+            headers={"WWW-Authenticate": 'Basic realm="Descargas Transparencia Oncologica"'},
+        )
+    return credentials.username
+
 
 _ENCUESTA_HTML = BASE_DIR / "app" / "static" / "encuesta.html"
 _COMPARADOR_HTML = BASE_DIR / "app" / "static" / "comparador.html"
@@ -127,7 +154,7 @@ async def get_dashboard_bajas(desde: str | None = None, hasta: str | None = None
     summary="Descarga el historico/snapshot de precios para analisis (ERP)",
     tags=["comparador"],
 )
-async def dashboard_export_csv():
+async def dashboard_export_csv(usuario: str = Depends(requiere_credenciales)):
     from . import historial as hist
     filas = hist.filas_export()  # serie historica completa (todas las fechas)
     buf = io.StringIO()
@@ -151,7 +178,7 @@ async def dashboard_export_csv():
     summary="Reporte ejecutivo del panel en PDF (Premium)",
     tags=["comparador"],
 )
-async def dashboard_reporte_pdf():
+async def dashboard_reporte_pdf(usuario: str = Depends(requiere_credenciales)):
     from . import reporte
     pdf_bytes = reporte.generar_reporte_pdf(cat.dashboard())
     return Response(
@@ -321,7 +348,8 @@ async def get_resumen(benchmark_id: int):
     "/resultados/{benchmark_id}/export.{fmt}",
     summary="Exporta el benchmark a json | csv | xlsx",
 )
-async def export_resultado(benchmark_id: int, fmt: str):
+async def export_resultado(benchmark_id: int, fmt: str,
+                           usuario: str = Depends(requiere_credenciales)):
     try:
         path = exporter.export_benchmark(benchmark_id, fmt=fmt)
     except ValueError as e:
@@ -371,7 +399,7 @@ async def encuestas_list(limit: int = 1000):
     summary="Exporta todas las respuestas de la encuesta a CSV",
     tags=["encuesta"],
 )
-async def encuestas_export_csv():
+async def encuestas_export_csv(usuario: str = Depends(requiere_credenciales)):
     filas = db.listar_encuestas(limit=100000)
     buf = io.StringIO()
     if filas:
