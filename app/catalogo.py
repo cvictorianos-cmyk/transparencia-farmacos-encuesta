@@ -414,6 +414,10 @@ CATALOGO: list[dict] = [
             _o("Clinica Davila", "PERTUZUMAB/TRASTUZUMAB 1200/600MG (PHESGO)", 3_962_790),
             _o("Clinica Alemana", "PHESGO 1200/600 MG INYECTABLE (500820236)", 3_809_834),
             _o("Clinica Santa Maria", "PHESGO(PERTUZ 600MG+TRASTUZ 600MG)/10ML (77010001)", 4_650_544),
+            _o("UC Marcoleta", "PERTUZUMAB 600MG TRASTUZUMAB 600MG (F00141)", 4_177_233),
+            _o("UC Marcoleta", "PERTUZUMAB 1200MG TRASTUZUMAB 600MG (F00146)", 4_344_322),
+            _o("UC San Carlos", "PERTUZUMAB 600MG TRASTUZUMAB 600MG (F00141)", 4_594_956),
+            _o("UC San Carlos", "PERTUZUMAB 1200MG TRASTUZUMAB 600MG (F00146)", 4_778_754),
         ],
     },
     {
