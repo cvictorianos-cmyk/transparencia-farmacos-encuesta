@@ -423,7 +423,7 @@
 const fmt = n => "$" + (n ?? 0).toLocaleString("es-CL");
 const f2 = c => c.replace("Clinica ", "").replace("Universidad de los Andes", "U. Andes");
 // Vista unica Premium: sin toggle de planes ni login (todas las clinicas visibles).
-let CASOS = [], PLAN = "prem", PA_ACTUAL = null, PREMIUM_OK = true;
+let CASOS = [], PLAN = "prem", PA_ACTUAL = null, MARCA_ACTUAL = null, PREMIUM_OK = true;
 const FREE_N = 3; // clinicas visibles en plan gratuito
 
 // === Login Premium ===
@@ -516,7 +516,7 @@ function setPlan(p) {
   const nd = document.getElementById("nav-dash");
   if (nd) nd.classList.toggle("hidden", !(p === "prem" && PREMIUM_OK));
   if (PA_ACTUAL && !document.getElementById("vista-det").classList.contains("hidden")) {
-    detalle(PA_ACTUAL); // repintar detalle con el nuevo plan
+    detalle(PA_ACTUAL, MARCA_ACTUAL); // repintar detalle con el nuevo plan
   }
   const vc = document.getElementById("vista-cotiza");
   if (vc && !vc.classList.contains("hidden")) { ajustarCotizador(); pintarPremiumCotiza(); }
@@ -635,7 +635,7 @@ function pintarLista(items) {
       '<div class="ahorro">Ahorra hasta ' + fmt(c.ahorro_max_clp) +
         ' (' + c.ahorro_max_pct + '%)</div>' +
       (c.bioequivalente ? '<span class="bio">Tiene biosimilar</span>' : '');
-    const abrir = () => detalle(c.principio_activo);
+    const abrir = () => detalle(c.principio_activo, c.marca);
     div.onclick = abrir;
     div.onkeydown = e => { if (e.key === "Enter") abrir(); };
     cont.appendChild(div);
@@ -676,9 +676,11 @@ function cupon(pa) {
     '</div>';
 }
 
-async function detalle(pa) {
+async function detalle(pa, marca) {
   PA_ACTUAL = pa;
-  const r = await fetch("/comparar/" + encodeURIComponent(pa));
+  MARCA_ACTUAL = marca || null;
+  const r = await fetch("/comparar/" + encodeURIComponent(pa) +
+    (MARCA_ACTUAL ? "?marca=" + encodeURIComponent(MARCA_ACTUAL) : ""));
   if (!r.ok) return;
   const data = await r.json();
   const det = document.getElementById("det");
