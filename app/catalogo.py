@@ -409,6 +409,7 @@ CATALOGO: list[dict] = [
         "presentacion": "Vial combo 600 mg/600 mg solucion subcutanea",
         "ofertas": [
             _o("Clinica INDISA", "PHESGO 600/600 (PERTU/TRASTUZUMAB)", 3_848_317),
+            _o("Clinica INDISA", "PHESGO 1200/600 MG (PERTU/TRASTU) FRASCO (13030129)", 3_848_317),
             _o("Clinica Davila", "PERTUZUMAB/TRASTUZUMAB 600/600MG (PHESGO)", 3_962_790),
             _o("Clinica Davila", "PERTUZUMAB/TRASTUZUMAB 1200/600MG (PHESGO)", 3_962_790),
             _o("Clinica Alemana", "PHESGO 1200/600 MG INYECTABLE (500820236)", 3_809_834),
