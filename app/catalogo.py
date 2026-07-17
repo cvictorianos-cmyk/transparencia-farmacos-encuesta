@@ -40,7 +40,7 @@ CLINICAS = [
     "FALP",
 ]
 
-FECHA_DATOS = "2026-06 (arancel particular, horario habil)"
+FECHA_DATOS = "2026-07 (arancel particular, horario habil)"
 
 # Pagina/arancel publico de cada clinica (para la columna "fuente" del export).
 CLINICA_URL = {
@@ -464,7 +464,7 @@ CATALOGO: list[dict] = [
         "registro_isp": "Por verificar (registrosanitario.ispch.gob.cl)",
         "presentacion": "Caja x 60 comprimidos 100 mg (venta por caja)",
         "ofertas": [
-            _o("Clinica Universidad de los Andes", "IMATINIB 100 MG 60 CMP", 1_152_022, bioeq=True),
+            _o("Clinica Universidad de los Andes", "IMATINIB 100 MG 60 CMP (5000002062)", 1_207_978, bioeq=True),
         ],
     },
     {
@@ -475,8 +475,10 @@ CATALOGO: list[dict] = [
         "registro_isp": "Por verificar (registrosanitario.ispch.gob.cl)",
         "presentacion": "Comprimido recubierto 400 mg (precio normalizado por comprimido)",
         "ofertas": [
-            _o("Clinica Universidad de los Andes", "IMATINIB MESILATO CMP REC 400 MG (por comprimido)", 171_398, bioeq=True),
-            _o("Clinica Universidad de los Andes", "IMATINIB 400 MG X 30 CMP -> por comprimido", 73_457),
+            _o("Clinica Universidad de los Andes", "IMATINIB MESILATO CMP REC 400 MG (5000001139) (por comprimido)", 175_855, bioeq=True),
+            _o("Clinica Universidad de los Andes", "IMATINIB 400 MG X 30 CMP (5000002436) -> por comprimido", 77_025),
+            _o("UC Marcoleta", "IMATINIB 400 MG X 30 UND (F01014) -> por comprimido", 77_055),
+            _o("UC San Carlos", "IMATINIB 400 MG X 30 UND (F01014) -> por comprimido", 77_055),
         ],
     },
 ]
