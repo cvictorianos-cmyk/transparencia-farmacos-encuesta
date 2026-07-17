@@ -941,14 +941,18 @@ async function cargarDashboard() {
     html += '<div class="dash-card"><h3>🏥 Precio por clínica · ' + g.marca + '</h3>' +
       '<p class="disc" style="margin:0 0 12px">' + g.presentacion +
       ' · menor precio particular publicado por cada clínica.</p>' +
-      '<div style="display:flex;align-items:flex-end;gap:10px;height:230px;padding:0 4px">';
+      '<div style="display:flex;align-items:flex-start;gap:10px;padding:0 4px">';
     pc.forEach(x => {
       const hpx = Math.max(16, Math.round(x.precio_min_clp / maxP * 165));
       const color = x.bioequivalente ? "var(--ok)" : "var(--azul)";
-      html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:0">' +
-        '<div style="font-size:.64rem;font-weight:800;color:var(--azul);margin-bottom:3px;white-space:nowrap">' + fmt(x.precio_min_clp) + '</div>' +
-        '<div title="' + (x.glosa || "").replace(/"/g, "&quot;") + '" style="width:72%;max-width:56px;height:' + hpx +
-          'px;background:' + color + ';border-radius:7px 7px 0 0"></div>' +
+      // zona de barras con altura FIJA: todas las columnas comparten la misma
+      // linea base aunque el nombre de la clinica ocupe 1, 2 o 3 lineas.
+      html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;min-width:0">' +
+        '<div style="height:192px;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end">' +
+          '<div style="font-size:.6rem;font-weight:800;color:var(--azul);margin-bottom:3px;white-space:nowrap">' + fmt(x.precio_min_clp) + '</div>' +
+          '<div title="' + (x.glosa || "").replace(/"/g, "&quot;") + '" style="width:72%;max-width:56px;height:' + hpx +
+            'px;background:' + color + ';border-radius:7px 7px 0 0"></div>' +
+        '</div>' +
         '<div style="font-size:.62rem;color:var(--gris);margin-top:5px;text-align:center;line-height:1.15;word-break:break-word">' + f2(x.clinica) + '</div>' +
         '</div>';
     });
