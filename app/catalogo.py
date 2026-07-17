@@ -68,6 +68,7 @@ CATEGORIAS_POR_PA = {
     "letrozol": ["Mama"],
     "trastuzumab": ["Mama"],
     "trastuzumab emtansina": ["Mama"],
+    "trastuzumab deruxtecan": ["Mama"],
     "pertuzumab/trastuzumab": ["Mama"],
     "imatinib": ["Leucemia"],
 }
@@ -139,6 +140,7 @@ _EMPRESAS_ISP = [
     ("PERTU", "Roche Chile Ltda."),
     ("HERCEPTIN", "Roche Chile Ltda."),
     ("BISINTEX", "Bio-Sintex (titular por verificar)"),  # biosimilar trastuzumab
+    ("DERUXTECAN", "Daiichi Sankyo (titular por verificar)"),  # Enhertu
     ("TRASTUZUMAB", "Roche Chile Ltda."),   # glosas sin marca (Herceptin de referencia)
     ("FEMARA", "Novartis Chile S.A."),
     ("NOLVADEX", "AstraZeneca Chile S.A."),
@@ -360,6 +362,11 @@ CATALOGO: list[dict] = [
             _o("Clinica Davila", "TRASTUZUMAB 440 MG EV FCO AMP 1 UNI", 1_801_250),
             _o("Clinica Universidad de los Andes", "TRASTUZUMAB FAM 440 MG LIOF", 2_519_244),
             _o("Clinica Universidad de los Andes", "TRASTUZUMAB 440MG EV (BISINTEX)", 1_611_295, bioeq=True),
+            _o("Clinica Alemana", "HERCEPTIN 440 MG INYECTABLE (500824007)", 2_552_535),
+            _o("Clinica Santa Maria", "HERCEPTIN 440 MG (TRASTUZUMAB) LIOF. FRA (65060003)", 1_403_737),
+            _o("Clinica Santa Maria", "BISINTEX 440 MG (TRASTUZUMAB) LIOF FRASC (65390005)", 1_668_707, bioeq=True),
+            _o("UC Marcoleta", "TRASTUZUMAB 440MG (F00125)", 2_718_829),
+            _o("UC San Carlos", "TRASTUZUMAB 440MG (F00125)", 2_990_711),
         ],
     },
     {
@@ -373,6 +380,9 @@ CATALOGO: list[dict] = [
             _o("Clinica INDISA", "TRASTUZUMAB 600 MG/5ML SC (HERCEPTIN)", 2_898_491),
             _o("Clinica Davila", "TRASTUZUMAB 600 MG SC (HERCEPTIN) JERING", 2_532_250),
             _o("Clinica Universidad de los Andes", "TRASTUZUMAB JER 600 MG SC", 2_772_900),
+            _o("Clinica Santa Maria", "HERCEPTIN 600 MG/5 ML (TRASTUZUMAB) SC F (65390003)", 2_420_878),
+            _o("UC Marcoleta", "TRASTUZUMAB 600 MG 5 ML SUBCUTANEO RE (F00147)", 2_904_597),
+            _o("UC San Carlos", "TRASTUZUMAB 600 MG 5 ML SUBCUTANEO RE (F00147)", 3_195_056),
         ],
     },
     {
@@ -385,6 +395,9 @@ CATALOGO: list[dict] = [
         "ofertas": [
             _o("Clinica Davila", "TRASTUZUMAB EMTANSINE 100 MG.(KADCYLA) A", 1_925_560),
             _o("Clinica Universidad de los Andes", "TRASTUZUMAB EMTANSINE 100 MG", 2_443_500),
+            _o("Clinica Santa Maria", "TRASTUZUMAB EMTANSINA 100 ML LIOF IV FRA (77010027)", 1_968_348),
+            _o("UC Marcoleta", "TRASTUZUMAB EMTANSINA 100 MG (F01043)", 2_152_019),
+            _o("UC San Carlos", "TRASTUZUMAB EMTANSINA 100 MG (F01043)", 2_278_566),
         ],
     },
     {
@@ -398,6 +411,19 @@ CATALOGO: list[dict] = [
             _o("Clinica INDISA", "TRASTUZUMAB EMTANSINA (KADCYLA) 160 MG", 3_677_718),
             _o("Clinica Davila", "TRASTUZUMAB EMTANSINE 160 MG.(KADCYLA) A", 3_103_550),
             _o("Clinica Universidad de los Andes", "TRASTUZUMAB EMTANSINE 160 MG FAM", 3_779_820),
+            _o("UC San Carlos", "TRASTUZUMAB EMTANSINA 160 MG (F01044)", 3_645_709),
+        ],
+    },
+    {
+        "principio_activo": "trastuzumab deruxtecan",
+        "marca": "Enhertu 100 mg",
+        "indicacion": "Cancer de mama HER2-positivo/HER2-low avanzado (conjugado anticuerpo-farmaco)",
+        "titular": "Daiichi Sankyo / AstraZeneca",
+        "registro_isp": "Por verificar (registrosanitario.ispch.gob.cl)",
+        "presentacion": "Vial 100 mg liofilizado para perfusion",
+        "ofertas": [
+            _o("UC Marcoleta", "TRASTUZUMAB DERUXTECAN 100 MG (F01051)", 3_747_127),
+            _o("UC San Carlos", "TRASTUZUMAB DERUXTECAN 100 MG (F01051)", 4_121_839),
         ],
     },
     {
