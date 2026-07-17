@@ -629,6 +629,7 @@ def dashboard(clinicas_sel: list[str] | None = None,
     suma_min = suma_max = 0
     n_ofertas = 0
     por_clinica: dict[str, dict] = {}   # menor precio por clinica (seleccion filtrada)
+    graficos_por_marca: list[dict] = []  # un grafico por presentacion (marca) seleccionada
 
     for c in CATALOGO:
         if fa_f and _slug(c["principio_activo"]) not in fa_f:
@@ -678,6 +679,21 @@ def dashboard(clinicas_sel: list[str] | None = None,
             "tipo_mas_barata": "Bioequivalente" if barata["bioequivalente"] else "Original",
             "tipo_mas_cara": "Bioequivalente" if cara["bioequivalente"] else "Original",
         })
+        m_pc: dict[str, dict] = {}
+        for o in ofertas:
+            e = m_pc.get(o["clinica"])
+            if e is None or o["precio"] < e["precio_min_clp"]:
+                m_pc[o["clinica"]] = {
+                    "clinica": o["clinica"],
+                    "precio_min_clp": o["precio"],
+                    "glosa": o["glosa"],
+                    "bioequivalente": o["bioequivalente"],
+                }
+        graficos_por_marca.append({
+            "marca": c["marca"],
+            "presentacion": c["presentacion"],
+            "precios": sorted(m_pc.values(), key=lambda x: x["precio_min_clp"]),
+        })
         marcas = [o["precio"] for o in ofertas if not o["bioequivalente"]]
         bios = [o["precio"] for o in ofertas if o["bioequivalente"]]
         if marcas and bios:
@@ -704,6 +720,7 @@ def dashboard(clinicas_sel: list[str] | None = None,
         "suma_precio_max_clp": suma_max,
         "ranking_brecha": por_farmaco,
         "precios_por_clinica": sorted(por_clinica.values(), key=lambda x: x["precio_min_clp"]),
+        "graficos_por_marca": graficos_por_marca,
         "biosimilares": biosimilares,
         "fecha_datos": FECHA_DATOS,
         "todas_clinicas": list(CLINICAS),
