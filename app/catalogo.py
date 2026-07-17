@@ -344,6 +344,7 @@ CATALOGO: list[dict] = [
         "presentacion": "Comprimido 2,5 mg (precio normalizado por comprimido)",
         "ofertas": [
             _o("Clinica INDISA", "FEMARA 2,5 MG (INDISA HOGAR) (por comprimido)", 17_211),
+            _o("Clinica Santa Maria", "TIADIS 2,5 MG (LETROZOL) CAJA 30 CP (65470001) -> por comprimido", 6_543, bioeq=True),
             _o("Clinica Davila", "LETROZOL 2,5 MG (TIADIS) CAJA 30 -> por comprimido", 2_327, bioeq=True),
             _o("Clinica Universidad de los Andes", "LETROZOL 2,5 MG / 30 CMP -> por comprimido", 9_275, bioeq=True),
         ],
@@ -465,6 +466,7 @@ CATALOGO: list[dict] = [
         "presentacion": "Caja x 60 comprimidos 100 mg (venta por caja)",
         "ofertas": [
             _o("Clinica Universidad de los Andes", "IMATINIB 100 MG 60 CMP (5000002062)", 1_207_978, bioeq=True),
+            _o("Clinica Alemana", "IMATINIB 100 MG FRACCIONAMIENTO (500530729) $32.109/unid -> equivalente caja x60", 1_926_540, bioeq=True),
         ],
     },
     {
