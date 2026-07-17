@@ -107,6 +107,18 @@ CREATE TABLE IF NOT EXISTS cotizaciones_lead (
     mejor_total_clp INTEGER,
     enviado_email INTEGER DEFAULT 0
 );
+
+CREATE TABLE IF NOT EXISTS visitas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fecha TEXT NOT NULL,
+    ruta TEXT NOT NULL,
+    status INTEGER,
+    user_agent TEXT,
+    referer TEXT,
+    ip_hash TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_visitas_fecha ON visitas(fecha);
+CREATE INDEX IF NOT EXISTS idx_visitas_ruta ON visitas(ruta);
 """
 
 
@@ -338,3 +350,47 @@ def listar_cotizaciones_lead(limit: int = 1000) -> list[dict]:
             "SELECT * FROM cotizaciones_lead ORDER BY id DESC LIMIT ?", (limit,)
         ).fetchall()
         return [dict(r) for r in rows]
+
+
+# === Metricas de visitas (registro de trafico de la API) ===
+
+def registrar_visita(data: dict) -> None:
+    """Guarda una visita. Nunca lanza: el registro no debe romper la request."""
+    try:
+        with get_conn() as conn:
+            conn.execute(
+                "INSERT INTO visitas (fecha, ruta, status, user_agent, referer, ip_hash) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (data.get("fecha"), data.get("ruta"), data.get("status"),
+                 data.get("user_agent"), data.get("referer"), data.get("ip_hash")),
+            )
+    except Exception:
+        pass
+
+
+def metricas_visitas() -> dict:
+    """Resumen de visitas: totales, por dia, por ruta y ultimas visitas."""
+    with get_conn() as conn:
+        total = conn.execute("SELECT COUNT(*) c FROM visitas").fetchone()["c"]
+        unicos = conn.execute(
+            "SELECT COUNT(DISTINCT ip_hash) c FROM visitas WHERE ip_hash IS NOT NULL"
+        ).fetchone()["c"]
+        por_dia = [dict(r) for r in conn.execute(
+            "SELECT substr(fecha, 1, 10) dia, COUNT(*) visitas, "
+            "COUNT(DISTINCT ip_hash) visitantes_unicos "
+            "FROM visitas GROUP BY dia ORDER BY dia DESC LIMIT 60")]
+        por_ruta = [dict(r) for r in conn.execute(
+            "SELECT ruta, COUNT(*) visitas, COUNT(DISTINCT ip_hash) visitantes_unicos "
+            "FROM visitas GROUP BY ruta ORDER BY visitas DESC LIMIT 30")]
+        ultimas = [dict(r) for r in conn.execute(
+            "SELECT fecha, ruta, status, user_agent FROM visitas "
+            "ORDER BY id DESC LIMIT 20")]
+    return {
+        "total_visitas": total,
+        "visitantes_unicos": unicos,
+        "por_dia": por_dia,
+        "por_ruta": por_ruta,
+        "ultimas_visitas": ultimas,
+        "nota": ("Registro desde el ultimo deploy: el disco del plan free de Render es "
+                 "efimero y el contador se reinicia con cada deploy/reinicio."),
+    }

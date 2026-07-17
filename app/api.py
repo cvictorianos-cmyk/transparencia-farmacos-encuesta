@@ -49,6 +49,21 @@ def requiere_credenciales(credentials: HTTPBasicCredentials = Depends(_security)
 _ENCUESTA_HTML = BASE_DIR / "app" / "static" / "encuesta.html"
 _COMPARADOR_HTML = BASE_DIR / "app" / "static" / "comparador.html"
 
+# Google Analytics 4: se activa definiendo GA_ID (ej. G-XXXXXXXXXX) en Render.
+_GA_ID = os.environ.get("GA_ID", "").strip()
+
+
+def _con_ga(html: str) -> str:
+    """Inyecta el tag de Google Analytics 4 si GA_ID esta configurado."""
+    if not _GA_ID or "googletagmanager" in html:
+        return html
+    snippet = (
+        f'<script async src="https://www.googletagmanager.com/gtag/js?id={_GA_ID}"></script>'
+        "<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}"
+        f"gtag('js',new Date());gtag('config','{_GA_ID}');</script>"
+    )
+    return html.replace("</head>", snippet + "</head>", 1)
+
 
 @router.get("/health")
 async def health():
@@ -71,7 +86,7 @@ async def list_clinicas():
 async def comparador_ui():
     if not _COMPARADOR_HTML.exists():
         raise HTTPException(500, "Comparador no encontrado")
-    return HTMLResponse(_COMPARADOR_HTML.read_text(encoding="utf-8"))
+    return HTMLResponse(_con_ga(_COMPARADOR_HTML.read_text(encoding="utf-8")))
 
 
 @router.get(
@@ -185,6 +200,15 @@ async def dashboard_reporte_pdf(usuario: str = Depends(requiere_credenciales)):
         content=pdf_bytes, media_type="application/pdf",
         headers={"Content-Disposition": "attachment; filename=reporte_transparencia_oncologica.pdf"},
     )
+
+
+@router.get(
+    "/metricas",
+    summary="Metricas de visitas de la API (requiere usuario y contrasena)",
+    tags=["metricas"],
+)
+async def get_metricas(usuario: str = Depends(requiere_credenciales)):
+    return db.metricas_visitas()
 
 
 @router.get(
@@ -368,7 +392,7 @@ async def export_resultado(benchmark_id: int, fmt: str,
 async def encuesta_form():
     if not _ENCUESTA_HTML.exists():
         raise HTTPException(500, "Formulario de encuesta no encontrado")
-    return HTMLResponse(_ENCUESTA_HTML.read_text(encoding="utf-8"))
+    return HTMLResponse(_con_ga(_ENCUESTA_HTML.read_text(encoding="utf-8")))
 
 
 @router.post(

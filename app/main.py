@@ -1,7 +1,9 @@
 """Entrypoint de la API FastAPI."""
+import hashlib
 import logging
 import os
 import secrets
+from datetime import datetime, timezone
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -37,6 +39,33 @@ app.add_middleware(
 @app.on_event("startup")
 async def _startup():
     init_db()
+
+
+# === Registro de visitas (metricas de trafico para el AFE) ===
+# Guarda cada GET relevante en SQLite (tabla visitas). Consultar en /metricas
+# (protegido con las credenciales de descargas). IP anonimizada via hash.
+_RUTAS_SIN_REGISTRO = ("/health", "/metricas", "/favicon", "/docs", "/openapi", "/redoc")
+
+
+@app.middleware("http")
+async def registrar_visitas(request: Request, call_next):
+    response = await call_next(request)
+    try:
+        ruta = request.url.path
+        if request.method == "GET" and not ruta.startswith(_RUTAS_SIN_REGISTRO):
+            from . import database as db
+            ip = request.client.host if request.client else None
+            db.registrar_visita({
+                "fecha": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "ruta": ruta,
+                "status": response.status_code,
+                "user_agent": (request.headers.get("user-agent") or "")[:200],
+                "referer": (request.headers.get("referer") or "")[:200],
+                "ip_hash": hashlib.sha256(ip.encode()).hexdigest()[:16] if ip else None,
+            })
+    except Exception:
+        pass  # el registro jamas debe romper una request
+    return response
 
 
 # === Autenticacion ===
