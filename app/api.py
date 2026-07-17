@@ -95,7 +95,7 @@ async def get_catalogo(categoria: str | None = None):
 
 
 @router.get(
-    "/comparar/{principio_activo}",
+    "/comparar/{principio_activo:path}",
     summary="Compara los precios de un farmaco entre las 5 clinicas",
     tags=["comparador"],
 )
@@ -188,7 +188,7 @@ async def dashboard_reporte_pdf(usuario: str = Depends(requiere_credenciales)):
 
 
 @router.get(
-    "/historial/{principio_activo}",
+    "/historial/{principio_activo:path}",
     summary="Serie temporal de precios por clinica (linea de tiempo Premium)",
     tags=["comparador"],
 )
@@ -201,7 +201,7 @@ async def get_historial(principio_activo: str):
 
 
 @router.get(
-    "/cotizar/{principio_activo}",
+    "/cotizar/{principio_activo:path}",
     summary="Cotiza el costo total de un tratamiento por clinica",
     tags=["cotizador"],
 )
@@ -286,7 +286,7 @@ async def get_alertas(limit: int = 1000):
 
 
 @router.get(
-    "/bioequivalentes/{principio_activo}",
+    "/bioequivalentes/{principio_activo:path}",
     summary="Lista productos del ISP para un principio activo (sin guardar)",
 )
 async def get_bioequivalentes(principio_activo: str):
@@ -301,7 +301,7 @@ async def get_bioequivalentes(principio_activo: str):
 
 
 @router.post(
-    "/benchmark/{principio_activo}",
+    "/benchmark/{principio_activo:path}",
     summary="Ejecuta el benchmark completo (ISP + 5 clínicas) y guarda en SQLite",
 )
 async def post_benchmark(principio_activo: str, body: BenchmarkRequest | None = None):
