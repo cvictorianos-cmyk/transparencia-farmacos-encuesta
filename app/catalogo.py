@@ -626,6 +626,7 @@ def dashboard(clinicas_sel: list[str] | None = None,
     biosimilares = []     # ahorro del biosimilar vs marca
     suma_min = suma_max = 0
     n_ofertas = 0
+    por_clinica: dict[str, dict] = {}   # menor precio por clinica (seleccion filtrada)
 
     for c in CATALOGO:
         if fa_f and _slug(c["principio_activo"]) not in fa_f:
@@ -637,6 +638,14 @@ def dashboard(clinicas_sel: list[str] | None = None,
         n_ofertas += len(ofertas)
         for o in ofertas:
             clinicas.add(o["clinica"])
+            pc = por_clinica.get(o["clinica"])
+            if pc is None or o["precio"] < pc["precio_min_clp"]:
+                por_clinica[o["clinica"]] = {
+                    "clinica": o["clinica"],
+                    "precio_min_clp": o["precio"],
+                    "glosa": o["glosa"],
+                    "bioequivalente": o["bioequivalente"],
+                }
         precios = [o["precio"] for o in ofertas]
         pmin, pmax = min(precios), max(precios)
         suma_min += pmin
@@ -692,6 +701,7 @@ def dashboard(clinicas_sel: list[str] | None = None,
         "suma_precio_min_clp": suma_min,
         "suma_precio_max_clp": suma_max,
         "ranking_brecha": por_farmaco,
+        "precios_por_clinica": sorted(por_clinica.values(), key=lambda x: x["precio_min_clp"]),
         "biosimilares": biosimilares,
         "fecha_datos": FECHA_DATOS,
         "todas_clinicas": list(CLINICAS),
