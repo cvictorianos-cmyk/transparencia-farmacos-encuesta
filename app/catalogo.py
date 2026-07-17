@@ -9,8 +9,9 @@ clinica (valor particular, horario habil), extraidos en junio de 2026:
     - UC Marcoleta (Hospital Clinico UC) . aranceles.ucchristus.cl/api/public (centroId=1)
     - UC San Carlos (Apoquindo) ......... aranceles.ucchristus.cl/api/public (centroId=3)
 
-Clinica Santa Maria y Clinica Alemana NO publican el valor particular de estos
-farmacos oncologicos en su arancel web, por lo que no se incluyen.
+Clinica Santa Maria y Clinica Alemana publican solo algunos de estos farmacos
+en su arancel web; se incluyen los casos con valor particular verificado
+(ej. Phesgo, jul-2026).
 
 Cada caso corresponde a una presentacion (vial/dosis) y contiene una lista de
 "ofertas": una fila por cada version publicada por una clinica, con:
@@ -411,6 +412,7 @@ CATALOGO: list[dict] = [
             _o("Clinica Davila", "PERTUZUMAB/TRASTUZUMAB 600/600MG (PHESGO)", 3_962_790),
             _o("Clinica Davila", "PERTUZUMAB/TRASTUZUMAB 1200/600MG (PHESGO)", 3_962_790),
             _o("Clinica Alemana", "PHESGO 1200/600 MG INYECTABLE (500820236)", 3_809_834),
+            _o("Clinica Santa Maria", "PHESGO(PERTUZ 600MG+TRASTUZ 600MG)/10ML (77010001)", 4_650_544),
         ],
     },
     {
