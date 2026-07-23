@@ -42,6 +42,21 @@ def _leer_csv() -> list[dict]:
         return list(csv.DictReader(fh))
 
 
+def ultima_fecha_real(filas_csv: list[dict] | None = None) -> date:
+    """Fecha del ultimo registro REAL capturado (ultimo lunes recolectado).
+
+    Ancla la fecha que se muestra/exporta al dato mismo, no al dia en que se
+    consulta la API. El recolector (GitHub Actions, lunes) sigue estampando
+    la fecha de captura; esta funcion solo la LEE. Si aun no hay registros,
+    cae a date.today() para conservar el comportamiento previo.
+    """
+    filas = filas_csv if filas_csv is not None else _leer_csv()
+    fechas = [r["fecha"] for r in filas if r.get("fecha")]
+    if not fechas:
+        return date.today()
+    return date.fromisoformat(max(fechas))
+
+
 def _match(fila_csv: dict, oferta: dict, pa: str) -> bool:
     if _slug(fila_csv.get("principio_activo", "")) != pa:
         return False
@@ -62,7 +77,7 @@ def serie_historica(principio_activo: str) -> dict | None:
         return None
 
     filas_csv = _leer_csv()
-    hoy = date.today()
+    hoy = ultima_fecha_real(filas_csv)
     presentaciones = []
 
     for c in casos:
@@ -132,7 +147,7 @@ def serie_historica(principio_activo: str) -> dict | None:
 
 def _puntos_oferta(o: dict, pa: str, filas_csv: list[dict]) -> list[tuple]:
     """Serie (fecha, precio, fuente) de una oferta: base + reales del CSV."""
-    hoy = date.today()
+    hoy = ultima_fecha_real(filas_csv)
     reales = sorted(
         ((r["fecha"], int(r["precio_clp"])) for r in filas_csv
          if _match(r, o, pa) and r.get("fecha") and r.get("precio_clp")),
@@ -195,7 +210,7 @@ def series_dashboard(farmacos: list[str] | None = None,
     fa = {f.strip().lower() for f in farmacos} if farmacos else None
     cl = {c.strip().lower() for c in clinicas} if clinicas else None
     d0 = desde or INICIO_BASE.isoformat()
-    d1 = hasta or date.today().isoformat()
+    d1 = hasta or ultima_fecha_real().isoformat()
 
     pas = sorted({c["principio_activo"] for c in CATALOGO})
     if fa:
@@ -251,7 +266,7 @@ def bajas_precio(desde: str | None = None, hasta: str | None = None,
     fa = {f.strip().lower() for f in farmacos} if farmacos else None
     cl = {c.strip().lower() for c in clinicas} if clinicas else None
     d0 = desde or INICIO_BASE.isoformat()
-    d1 = hasta or date.today().isoformat()
+    d1 = hasta or ultima_fecha_real().isoformat()
     if d0 > d1:
         d0, d1 = d1, d0
 

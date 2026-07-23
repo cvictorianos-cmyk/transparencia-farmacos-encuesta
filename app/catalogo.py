@@ -588,8 +588,8 @@ def listar_catalogo(categoria: str | None = None) -> list[dict]:
 
 def exportar_filas() -> list[dict]:
     """Filas planas del snapshot actual de precios (para descarga CSV / ERP)."""
-    from datetime import date
-    hoy = date.today().isoformat()
+    from .historial import ultima_fecha_real
+    hoy = ultima_fecha_real().isoformat()
     filas = []
     for c in CATALOGO:
         cats = "; ".join(categorias_de(c["principio_activo"]))
