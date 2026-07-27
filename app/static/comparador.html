@@ -283,7 +283,6 @@
   <div class="topbar"></div>
   <h1>Transparencia Oncológica Clínica</h1>
   <p>Comparador de fármacos oncológicos · Clínicas de Chile</p>
-  <span id="plan-badge" class="plan-badge prem">PREMIUM</span>
 </header>
 
 <nav class="nav">
@@ -508,8 +507,10 @@ function setPlan(p) {
   if (p === "prem" && !PREMIUM_OK) { abrirLogin(); return; }
   PLAN = p;
   const badge = document.getElementById("plan-badge");
-  badge.className = "plan-badge " + (p === "free" ? "free" : "prem");
-  badge.textContent = p === "free" ? "VERSIÓN GRATUITA" : "PREMIUM";
+  if (badge) {
+    badge.className = "plan-badge " + (p === "free" ? "free" : "prem");
+    badge.textContent = p === "free" ? "VERSIÓN GRATUITA" : "PREMIUM";
+  }
   document.getElementById("ad-lista").classList.toggle("hidden", p !== "free");
   document.getElementById("alert-lista").classList.toggle("hidden", p !== "prem");
   if (p === "prem") actualizarBannerAlertas();
