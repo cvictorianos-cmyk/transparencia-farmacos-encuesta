@@ -22,7 +22,7 @@ from .catalogo import CATALOGO, _slug
 BASE_DIR = Path(__file__).resolve().parent.parent
 CSV_PATH = BASE_DIR / "data" / "historial_precios.csv"
 
-INICIO_BASE = date(2026, 1, 1)
+INICIO_BASE = date(2026, 6, 1)
 PASO_BASE_DIAS = 15  # puntos quincenales para la linea base
 
 

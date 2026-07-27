@@ -927,7 +927,7 @@ async function cargarDashboard() {
       'Ajusta las fechas a tu necesidad. ' +
       'Usa los filtros de clínicas y fármacos de arriba para acotar.</p>' +
     '<div class="fechas">' +
-      '<div><label>Desde</label><input id="b-desde" type="date" value="2026-01-01" max="' + hoyB + '"></div>' +
+      '<div><label>Desde</label><input id="b-desde" type="date" value="2026-06-01" max="' + hoyB + '"></div>' +
       '<div><label>Hasta</label><input id="b-hasta" type="date" value="' + hoyB + '" max="' + hoyB + '"></div>' +
       '<button onclick="cargarBajasDash()">Aplicar rango</button>' +
     '</div>' +
@@ -1002,7 +1002,7 @@ async function cargarDashboard() {
   const hoy = new Date().toISOString().slice(0, 10);
   html += '<div class="dash-card"><h3>📈 Evolución histórica de precios</h3>' +
     '<div class="fechas">' +
-      '<div><label>Desde</label><input id="h-desde" type="date" value="2026-01-01" max="' + hoy + '"></div>' +
+      '<div><label>Desde</label><input id="h-desde" type="date" value="2026-06-01" max="' + hoy + '"></div>' +
       '<div><label>Hasta</label><input id="h-hasta" type="date" value="' + hoy + '" max="' + hoy + '"></div>' +
       '<button onclick="cargarHistoricoDash()">Aplicar rango</button>' +
     '</div>' +
