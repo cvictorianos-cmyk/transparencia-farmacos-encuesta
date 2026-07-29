@@ -801,7 +801,7 @@ def comparar(principio_activo: str, marca: str | None = None) -> dict | None:
         "disclaimer": (
             "Precios REALES del arancel particular publicado por cada clinica, soportado por la "
             "Ley de Transparencia (Ley 20.285) en Chile. 'Nombre en la clinica' es la glosa exacta "
-            "del arancel. Solo en Premium: 'Empresa (ISP)', titular del registro sanitario segun "
+            "del arancel. 'Empresa (ISP)', titular del registro sanitario segun "
             "registrosanitario.ispch.gob.cl, y 'Tipo', que indica si es el medicamento original "
             "(marca innovadora) o un bioequivalente/biosimilar. No constituye una cotizacion "
             "formal; confirme siempre el valor con la clinica."

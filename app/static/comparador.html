@@ -281,7 +281,7 @@
 <body>
 <header>
   <div class="topbar"></div>
-  <h1>Transparencia Oncológica Clínica</h1>
+  <h1>Transparencia Oncológica</h1>
   <p>Comparador de fármacos oncológicos · Clínicas de Chile</p>
 </header>
 
@@ -690,7 +690,7 @@ async function detalle(pa, marca) {
              '<div class="sub">' + data.n_presentaciones + ' presentación(es) · ' +
              (PLAN === "free"
                ? Math.min(FREE_N, totalClin) + " de " + totalClin + " clínicas (gratuito)"
-               : totalClin + " clínicas · Premium") + ' · precios reales</div>';
+               : totalClin + " clínicas") + ' · precios reales</div>';
 
   if (PLAN === "free") {
     html += '<div class="ad"><span class="tag">PUBLICIDAD</span>Farmacias asociadas: genéricos y biosimilares hasta 70% más baratos.</div>';
@@ -703,7 +703,7 @@ async function detalle(pa, marca) {
       '<div class="pres-head"><span class="marca">' + p.marca + '</span>' +
       '<span class="reg">Reg. ISP ' + p.registro_isp + '</span></div>' +
       '<div class="sub">' + p.presentacion + '</div>' +
-      '<div class="ahorro-box">Eligiendo la opción más barata (' + f2(p.clinica_mas_barata) +
+      '<div class="ahorro-box">Eligiendo la opción más económica (' + f2(p.clinica_mas_barata) +
         ') ahorras <b>' + fmt(p.ahorro_clp) + '</b> por vial (' + p.ahorro_pct + '%).</div>' +
       '<div class="tw"><table><thead><tr><th>Clínica</th><th>Principio activo</th>' +
         '<th>Nombre en la clínica</th>' +
