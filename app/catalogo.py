@@ -663,7 +663,8 @@ def dashboard(clinicas_sel: list[str] | None = None,
         otras_pres = sum(1 for x in CATALOGO if x["principio_activo"] == c["principio_activo"])
         nombre = c["principio_activo"].capitalize()
         if otras_pres > 1:
-            nombre += " " + c["marca"].replace("Darzalex", "").strip().split()[0]
+            _m = re.search(r"(\d+(?:[.,]\d+)?)\s*mg", c["marca"]) or re.search(r"(\d+(?:[.,]\d+)?)\s*mg", c["presentacion"])
+            nombre += " " + (_m.group(1) + " mg" if _m else c["marca"].replace("Darzalex", "").strip().split()[0])
         por_farmaco.append({
             "principio_activo": c["principio_activo"],
             "nombre": nombre,
