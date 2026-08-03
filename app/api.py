@@ -65,8 +65,10 @@ def _con_ga(html: str) -> str:
     return html.replace("</head>", snippet + "</head>", 1)
 
 
-@router.get("/health")
+@router.api_route("/health", methods=["GET", "HEAD"])
 async def health():
+    # GET y HEAD: HEAD permite que monitores de uptime (UptimeRobot usa HEAD
+    # por defecto) reciban 200 sin cuerpo, evitando falsos 405/Down.
     return {"status": "ok"}
 
 
