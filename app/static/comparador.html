@@ -231,9 +231,11 @@
                    padding:9px 16px; font-weight:700; cursor:pointer; font-size:.82rem; }
   .dash-dl { display:flex; flex-wrap:wrap; gap:10px; margin:6px 0 4px; }
   .dash-dl .dl-btn { flex:1; min-width:200px; text-align:center; text-decoration:none;
-                     background:var(--azul); color:#fff; border-radius:10px; padding:12px;
-                     font-weight:700; font-size:.85rem; }
+                     background:var(--azul); color:#fff; border:0; border-radius:10px; padding:12px;
+                     font-weight:700; font-size:.85rem; cursor:pointer; font-family:inherit; }
   .dash-dl .dl-btn.pdf { background:var(--oro); }
+  .dash-dl-nota { font-size:.72rem; color:var(--gris); margin:6px 0 0; }
+  .dash-dl-nota .lock { color:var(--azul2); font-weight:700; }
   #dash-historico { position:relative; }
   .h-tip { position:absolute; z-index:20; background:#1c2430; color:#fff; border-radius:8px;
            padding:7px 10px; font-size:.74rem; pointer-events:none; max-width:200px;
@@ -280,7 +282,9 @@
 </head>
 <body>
 <header>
-  <div class="topbar"></div>
+  <div class="topbar">
+    <button id="login-btn" class="login-btn" onclick="abrirAcceso()">🔐 Acceso clientes</button>
+  </div>
   <h1>Transparencia Oncológica</h1>
   <p>Comparador de fármacos oncológicos · Clínicas de Chile</p>
 </header>
@@ -308,15 +312,15 @@
 <!-- Modal de login Premium -->
 <div id="modal-login" class="modal-bg hidden">
   <div class="modal">
-    <h3>Acceso Premium</h3>
-    <p>Ingresa tus credenciales para activar la versión Premium ($4.990/mes).</p>
+    <h3>Acceso administrador y clientes</h3>
+    <p>Ingresa tus credenciales institucionales para acceder al panel de administración y a los datos para clientes.</p>
     <p id="err-login" class="err-login hidden">Usuario o contraseña incorrectos.</p>
     <input id="lg-user" type="text" placeholder="Usuario" autocomplete="username">
     <div class="pass-wrap">
       <input id="lg-pass" type="password" placeholder="Contraseña" autocomplete="current-password">
       <button type="button" class="pass-eye" id="lg-eye" onclick="togglePass()" aria-label="Mostrar contraseña">👁</button>
     </div>
-    <button class="btn-ok" onclick="loginPremium()">Entrar a Premium</button>
+    <button class="btn-ok" onclick="loginAcceso()">Ingresar</button>
     <button class="btn-cancel" onclick="cerrarLogin()">Cancelar</button>
   </div>
 </div>
@@ -429,6 +433,64 @@ const FREE_N = 3; // clinicas visibles en plan gratuito
 // Si el backend esta en MODO_DEMO, /premium/login acepta credenciales vacias
 // y Premium se activa sin mostrar el modal. Si el login esta reactivado
 // (MODO_DEMO=0), el backend responde 401 y se muestra el modal como siempre.
+// === Acceso administrador / clientes ===
+// CRED guarda las credenciales (base64 "usuario:contrasena") tras un login valido;
+// se usan para autorizar la descarga de datos historicos (HTTP Basic) sin que el
+// navegador muestre el popup nativo. Null = sin sesion.
+let CRED = null;
+
+// Puerta de acceso: SIEMPRE muestra el modal de login.
+function abrirAcceso() {
+  document.getElementById("err-login").classList.add("hidden");
+  document.getElementById("modal-login").classList.remove("hidden");
+  document.getElementById("lg-user").focus();
+}
+
+// Valida las credenciales contra /acceso/validar (HTTP Basic). Si son correctas,
+// guarda CRED y marca la sesion activa; si no, muestra el error en el modal.
+async function loginAcceso() {
+  const usuario = document.getElementById("lg-user").value.trim();
+  const contrasena = document.getElementById("lg-pass").value;
+  const cred = btoa(usuario + ":" + contrasena);
+  try {
+    const r = await fetch("/acceso/validar", { headers: { Authorization: "Basic " + cred } });
+    if (r.ok) { CRED = cred; sesionActiva(usuario); return; }
+  } catch (e) {}
+  document.getElementById("err-login").classList.remove("hidden");
+}
+
+function sesionActiva(usuario) {
+  cerrarLogin();
+  const b = document.getElementById("login-btn");
+  if (b) {
+    b.textContent = "★ Sesión activa" + (usuario ? " · " + usuario : "");
+    b.classList.add("logged");
+  }
+}
+
+// Descarga protegida: sin sesion abre el login; con sesion baja el archivo
+// enviando las credenciales en la cabecera Authorization y guardando el blob.
+async function descargarProtegido(path, filename) {
+  if (!CRED) { abrirAcceso(); return; }
+  try {
+    const r = await fetch(path, { headers: { Authorization: "Basic " + CRED } });
+    if (r.status === 401) { CRED = null; sesionCerrada(); abrirAcceso(); return; }
+    if (!r.ok) throw new Error("descarga");
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert("No se pudo descargar el archivo. Inténtalo nuevamente.");
+  }
+}
+
+function sesionCerrada() {
+  const b = document.getElementById("login-btn");
+  if (b) { b.textContent = "🔐 Acceso clientes"; b.classList.remove("logged"); }
+}
 async function abrirLogin() {
   if (PREMIUM_OK) { setPlan(PLAN === "prem" ? "free" : "prem"); return; }
   try {
@@ -447,7 +509,7 @@ function activarPremium(usuario) {
   cerrarLogin();
   const b = document.getElementById("login-btn");
   if (b) {
-    b.textContent = "★ Premium activo" + (usuario ? " · " + usuario : "");
+    b.textContent = "★ Sesión activa" + (usuario ? " · " + usuario : "");
     b.classList.add("logged");
   }
   setPlan("prem");
@@ -1017,9 +1079,11 @@ async function cargarDashboard() {
   // Descargas (al final de la página)
   html += '<div class="dash-card"><h3>⬇️ Descargas y reportes</h3>' +
     '<div class="dash-dl">' +
-    '<a class="dl-btn" href="/dashboard/export.csv" download>⬇️ Descargar datos históricos (CSV para ERP)</a>' +
-    '<a class="dl-btn pdf" href="/dashboard/reporte.pdf" target="_blank">📄 Reporte ejecutivo (PDF horizontal)</a>' +
-    '</div></div>';
+    '<button type="button" class="dl-btn" onclick="descargarProtegido(\'/dashboard/export.csv\',\'transparencia_precios.csv\')">⬇️ Descargar datos históricos (CSV para ERP)</button>' +
+    '<button type="button" class="dl-btn pdf" onclick="descargarProtegido(\'/dashboard/reporte.pdf\',\'reporte_transparencia_oncologica.pdf\')">📄 Reporte ejecutivo (PDF)</button>' +
+    '</div>' +
+    '<p class="dash-dl-nota"><span class="lock">🔐 Requiere acceso.</span> La descarga de datos históricos está reservada a administrador y clientes. Inicia sesión con “Acceso clientes” (arriba a la derecha) para habilitarla.</p>' +
+    '</div>';
   cont.innerHTML = html;
   ALL_CLIN = d.todas_clinicas.slice();
   ALL_FARM = d.todos_farmacos.slice();

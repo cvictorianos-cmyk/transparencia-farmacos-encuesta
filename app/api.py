@@ -185,6 +185,18 @@ async def get_dashboard_bajas(desde: str | None = None, hasta: str | None = None
 
 
 @router.get(
+    "/acceso/validar",
+    summary="Valida credenciales de administrador/cliente (para el login del comparador)",
+    tags=["comparador"],
+)
+async def acceso_validar(usuario: str = Depends(requiere_credenciales)):
+    # El comparador usa este endpoint para autenticar el login en pantalla:
+    # devuelve 200 solo si el usuario/contrasena (HTTP Basic) son validos, y
+    # 401 en caso contrario. Habilita luego la descarga de datos historicos.
+    return {"ok": True, "usuario": usuario}
+
+
+@router.get(
     "/dashboard/export.csv",
     summary="Descarga el historico/snapshot de precios para analisis (ERP)",
     tags=["comparador"],
