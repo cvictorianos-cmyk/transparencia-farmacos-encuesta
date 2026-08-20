@@ -205,13 +205,30 @@ async def dashboard_export_csv(usuario: str = Depends(requiere_credenciales)):
     from . import historial as hist
     filas = hist.filas_export()  # serie historica completa (todas las fechas)
     buf = io.StringIO()
-    cols = ["fecha", "categoria", "principio_activo", "marca", "presentacion",
-            "clinica", "nombre_en_clinica", "empresa_isp", "tipo",
-            "precio_particular_clp", "moneda", "origen", "fuente"]
-    w = csv.DictWriter(buf, fieldnames=cols)
-    w.writeheader()
+    # (clave interna, encabezado visible). Orden de columnas del archivo.
+    columnas = [
+        ("fecha", "Fecha"),
+        ("categoria", "Categoría"),
+        ("principio_activo", "Principio activo"),
+        ("marca", "Marca"),
+        ("presentacion", "Presentación"),
+        ("clinica", "Clínica"),
+        ("nombre_en_clinica", "Nombre en la clínica"),
+        ("empresa_isp", "Empresa (ISP)"),
+        ("tipo", "Tipo"),
+        ("precio_particular_clp", "Precio particular (CLP)"),
+        ("moneda", "Moneda"),
+        ("origen", "Origen"),
+        ("fuente", "Fuente"),
+    ]
+    claves = [c for c, _ in columnas]
+    # Separador ';' (punto y coma): Excel en Chile/LatAm lo abre directo en
+    # columnas. QUOTE_MINIMAL entrecomilla solo lo necesario; lineterminator
+    # explicito evita filas en blanco intercaladas al abrir en Windows.
+    w = csv.writer(buf, delimiter=";", quoting=csv.QUOTE_MINIMAL, lineterminator="\r\n")
+    w.writerow([titulo for _, titulo in columnas])
     for f in filas:
-        w.writerow(f)
+        w.writerow([f.get(c, "") for c in claves])
     # BOM utf-8 para que Excel muestre bien los acentos (Pulmón, Riñón, etc.)
     contenido = "﻿" + buf.getvalue()
     return StreamingResponse(

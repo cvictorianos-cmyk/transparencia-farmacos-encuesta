@@ -178,7 +178,7 @@ def filas_export() -> list[dict]:
     out = []
     for c in CATALOGO:
         pa = _slug(c["principio_activo"])
-        cats = "; ".join(categorias_de(pa))
+        cats = " / ".join(categorias_de(pa))
         for o in c["ofertas"]:
             for fecha, precio, fuente in _puntos_oferta(o, pa, filas_csv):
                 out.append({
