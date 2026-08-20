@@ -48,6 +48,7 @@ def requiere_credenciales(credentials: HTTPBasicCredentials = Depends(_security)
 
 _ENCUESTA_HTML = BASE_DIR / "app" / "static" / "encuesta.html"
 _COMPARADOR_HTML = BASE_DIR / "app" / "static" / "comparador.html"
+_INICIO_HTML = BASE_DIR / "app" / "static" / "inicio.html"
 
 # Google Analytics 4: se activa definiendo GA_ID (ej. G-XXXXXXXXXX) en Render.
 _GA_ID = os.environ.get("GA_ID", "").strip()
@@ -75,6 +76,23 @@ async def health():
 @router.get("/clinicas", summary="Lista las clínicas soportadas")
 async def list_clinicas():
     return {"clinicas": list(CLINIC_SCRAPERS.keys())}
+
+
+# === Portada / landing (contexto del proyecto antes del comparador) ===
+
+@router.get(
+    "/",
+    response_class=HTMLResponse,
+    summary="Portada: contexto del proyecto y acceso al comparador",
+    tags=["comparador"],
+)
+async def inicio_ui():
+    # Landing page que explica el porque del proyecto y la realidad del gasto
+    # oncologico en Chile antes de dirigir al usuario al comparador.
+    if not _INICIO_HTML.exists():
+        # Respaldo: si aun no se ha desplegado la portada, ir directo al comparador.
+        return Response(status_code=307, headers={"Location": "/comparador"})
+    return HTMLResponse(_con_ga(_INICIO_HTML.read_text(encoding="utf-8")))
 
 
 # === Comparador / catalogo precargado (10 casos oncologicos) ===

@@ -103,11 +103,14 @@ async def premium_login(request: Request):
 app.include_router(router)
 
 
-@app.get("/")
-async def root():
+@app.get("/info")
+async def info():
+    # Metadatos de la API (JSON). La raiz "/" ahora sirve la portada HTML
+    # (ver ruta inicio_ui en api.py); este endpoint conserva el indice JSON.
     return {
         "name": "API Benchmarking Fármacos Oncológicos",
         "version": "0.2.0",
+        "inicio": "/",
         "comparador": "/comparador",
         "catalogo": "/catalogo",
         "encuesta": "/encuesta",
