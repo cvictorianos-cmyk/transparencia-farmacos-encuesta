@@ -79,6 +79,19 @@ async def list_clinicas():
 
 
 # === Portada / landing (contexto del proyecto antes del comparador) ===
+#
+# La portada se sirve tanto en la raiz "/" como en "/comparador". Asi, quienes
+# ya tienen guardada la direccion antigua del comparador (/comparador) tambien
+# arrancan por la portada y desde alli entran al comparador real (/comparador/app).
+
+
+def _portada_response():
+    """Devuelve la portada (inicio.html); si aun no existe, va al comparador."""
+    if not _INICIO_HTML.exists():
+        # Respaldo: si aun no se ha desplegado la portada, ir directo al comparador.
+        return Response(status_code=307, headers={"Location": "/comparador/app"})
+    return HTMLResponse(_con_ga(_INICIO_HTML.read_text(encoding="utf-8")))
+
 
 @router.get(
     "/",
@@ -89,16 +102,26 @@ async def list_clinicas():
 async def inicio_ui():
     # Landing page que explica el porque del proyecto y la realidad del gasto
     # oncologico en Chile antes de dirigir al usuario al comparador.
-    if not _INICIO_HTML.exists():
-        # Respaldo: si aun no se ha desplegado la portada, ir directo al comparador.
-        return Response(status_code=307, headers={"Location": "/comparador"})
-    return HTMLResponse(_con_ga(_INICIO_HTML.read_text(encoding="utf-8")))
+    return _portada_response()
+
+
+@router.get(
+    "/comparador",
+    response_class=HTMLResponse,
+    summary="Portada tambien en /comparador (direccion antigua) antes del comparador",
+    tags=["comparador"],
+)
+async def comparador_portada_ui():
+    # La direccion antigua /comparador ahora muestra la portada (la misma que "/")
+    # para que quienes la tengan guardada comiencen por la portada. El comparador
+    # real vive en /comparador/app.
+    return _portada_response()
 
 
 # === Comparador / catalogo precargado (10 casos oncologicos) ===
 
 @router.get(
-    "/comparador",
+    "/comparador/app",
     response_class=HTMLResponse,
     summary="Comparador web responsivo de precios (movil y escritorio)",
     tags=["comparador"],
