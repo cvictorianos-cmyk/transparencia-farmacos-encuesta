@@ -1,0 +1,44 @@
+# Dockerfile para Render con soporte Playwright
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Instala dependencias del sistema para Playwright
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    gnupg \
+    apt-transport-https \
+    ca-certificates \
+    git \
+    libnss3 \
+    libnspr4 \
+    libgconf-2-4 \
+    libappindicator1 \
+    libpangcairo-1.0-0 \
+    libgbm1 \
+    libasound2 \
+    libxss1 \
+    libxrender1 \
+    fonts-noto-color-emoji \
+    xfonts-75dpi \
+    xfonts-100dpi \
+    xfonts-scalable \
+    xfonts-encodings \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copia requirements y instala dependencias Python
+COPY requirements_render.txt requirements.txt ./
+RUN pip install --no-cache-dir -r requirements_render.txt
+
+# Instala Chromium de Playwright
+RUN python3 -m playwright install chromium --with-deps
+
+# Copia código
+COPY . .
+
+# Expose puerto
+EXPOSE 8000
+
+# Comando de inicio
+CMD ["python", "app/main.py"]

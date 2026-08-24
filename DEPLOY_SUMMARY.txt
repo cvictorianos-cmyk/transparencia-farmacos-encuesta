@@ -1,0 +1,204 @@
+================================================================================
+  PROYECTO TRANSPARENCIA ONCOLOGICA - RECOLECTOR COMPLETO
+  Deploy Playwright en Render (2026-08-24)
+================================================================================
+
+📊 ESTADO ACTUAL
+================================================================================
+✅ Run automatizado LUNES 2026-08-24
+   └─ 56 precios capturados (INDISA 26 + UC Marcoleta 15 + UC San Carlos 15)
+   └─ Correo enviado por SMTP a transparenciaoncologica@gmail.com
+   └─ CSV histórico actualizado, sin duplicados
+
+⏳ FALTANTE (SOLUCIONADO CON PLAYWRIGHT)
+   └─ UANDES: 15-20 precios (403 anti-bot con httpx)
+   └─ Dávila: 0-5 precios (SPA, requiere JS)
+   └─ Santa María: 0-5 precios (SPA, requiere JS)
+   └─ Alemana: 0-5 precios (SPA, requiere JS)
+
+================================================================================
+🎯 SOLUCIÓN IMPLEMENTADA
+================================================================================
+Playwright en Render (no en sandbox local)
+
+Scripts creados:
+  1. recolectar_navegador_full.py (7 KB)
+     → Captura UANDES + clínicas SPA usando Playwright
+     → Salida: JSON listo para mergear
+  
+  2. integrar_navegador.py (2 KB)
+     → Mergea JSON de Playwright con CSV histórico
+     → Idempotente: no duplica si existen filas del día
+  
+  3. Dockerfile.render (1 KB)
+     → Imagen Docker con Playwright + deps del sistema
+     → Listo para copiar a tu repo
+  
+  4. requirements_render.txt (200 B)
+     → Dependencias Python: playwright 1.40.1 + fastapi
+  
+  5. INSTRUCCIONES_RENDER.md (6.3 KB)
+     → Guía detallada paso a paso
+  
+  6. DEPLOY_CHECKLIST.md (6.4 KB)
+     → Checklist con acciones específicas
+  
+  7. SETUP_RENDER.sh (1.8 KB)
+     → Script de verificación local
+
+================================================================================
+🚀 PRÓXIMOS PASOS (30 MINUTOS)
+================================================================================
+
+PASO 1: Local (tu máquina)
+  1a. Verifica:
+      cd api_benchmarking_oncologico
+      bash SETUP_RENDER.sh
+
+  1b. Git commit & push:
+      git add scripts/recolectar_navegador_full.py scripts/integrar_navegador.py
+      git add requirements_render.txt Dockerfile.render SETUP_RENDER.sh
+      git add INSTRUCCIONES_RENDER.md DEPLOY_CHECKLIST.md
+      git commit -m "feat: recolector Playwright para UANDES + SPA"
+      git push
+
+PASO 2: Render.com (tu servicio)
+  2a. Settings → Build & Deploy
+  2b. Build Command:
+      pip install -r requirements_render.txt && \
+      python3 -m playwright install chromium --with-deps
+  2c. Save (redeploy automático comienza)
+  2d. Espera a que termine ("Build successful")
+
+PASO 3: Tu app/main.py (agregar endpoint)
+  Copia este código al final de tu FastAPI app:
+
+  ----
+  from fastapi import BackgroundTasks
+  import subprocess
+  from datetime import datetime
+
+  @app.post("/api/recolectar-navegador")
+  async def recolectar_navegador(background_tasks: BackgroundTasks):
+      def run_recolector():
+          try:
+              print(f"[{datetime.now()}] Iniciando Playwright", flush=True)
+              result = subprocess.run(
+                  ["python3", "scripts/recolectar_navegador_full.py",
+                   "--export-json", "/tmp/navegador_hoy.json"],
+                  capture_output=True, text=True, timeout=600
+              )
+              if result.returncode == 0:
+                  subprocess.run(
+                      ["python3", "scripts/integrar_navegador.py",
+                       "/tmp/navegador_hoy.json"],
+                      capture_output=True, text=True
+                  )
+                  print("[OK] Completada", flush=True)
+          except Exception as e:
+              print(f"[ERROR] {e}", flush=True)
+      
+      background_tasks.add_task(run_recolector)
+      return {"status": "recolección iniciada (background)"}
+  ----
+
+  Commit & push:
+      git add app/main.py
+      git commit -m "feat: endpoint /api/recolectar-navegador"
+      git push
+
+PASO 4: Cron externo (cron-job.org)
+  4a. Regístrate: https://cron-job.org
+  4b. New Cronjob:
+      - Title: "Recolector precios oncológicos"
+      - URL: https://tu-api-render.onrender.com/api/recolectar-navegador
+      - Method: POST
+      - Schedule: Lunes 09:00 UTC
+  4c. Save
+
+================================================================================
+✨ RESULTADO ESPERADO (PRÓXIMO LUNES)
+================================================================================
+
+Lunes 2026-08-31 09:00 UTC:
+
+1. cron-job.org envía POST a tu API
+2. Tu API lanza Playwright en background
+3. Playwright abre navegador, busca:
+   ✅ UANDES: ~15-20 precios (pembrolizumab, daratumumab, nivolumab, etc.)
+   ✅ Dávila: 0-5 precios (si el sitio permite)
+   ✅ Santa María: 0-5 precios
+   ✅ Alemana: 0-5 precios
+4. Resultado mergea con CSV histórico
+5. Logs disponibles en Render dashboard
+
+TOTAL ESPERADO: 80-100+ precios/semana (vs. 56 actuales)
+
+================================================================================
+📋 ARCHIVOS GENERADOS (en tu carpeta)
+================================================================================
+
+api_benchmarking_oncologico/
+├── scripts/
+│   ├── recolectar_navegador_full.py      ← Nuevo (Playwright)
+│   ├── integrar_navegador.py              ← Nuevo (merge)
+│   └── [otros scripts existentes]
+├── requirements_render.txt                ← Nuevo (con playwright)
+├── Dockerfile.render                      ← Nuevo (con Playwright)
+├── INSTRUCCIONES_RENDER.md                ← Nuevo (guía)
+├── DEPLOY_CHECKLIST.md                    ← Nuevo (checklist paso a paso)
+├── SETUP_RENDER.sh                        ← Nuevo (verificación local)
+└── DEPLOY_SUMMARY.txt                     ← Este archivo
+
+================================================================================
+❓ PREGUNTAS FRECUENTES
+================================================================================
+
+Q: ¿Puedo probar Playwright localmente?
+A: No en sandbox (falta libc). Pero los scripts están listos. Deploy en Render
+   y test via cron-job.org POST.
+
+Q: ¿Qué pasa si Render no tiene espacio?
+A: Playwright consume ~500 MB. Plan Starter de Render debería bastar.
+   Monitorea: Render Dashboard → Deployments → Disk Usage.
+
+Q: ¿Timeout si una clínica es lenta?
+A: Sí. Cada página tiene timeout=10000 (10s). Si falla, aumenta a 20000 ms
+   en recolectar_navegador_full.py línea ~130.
+
+Q: ¿Cómo rollback si todo falla?
+A: Pausa cron en cron-job.org. Sigue usando httpx (56 precios).
+   Los scripts nuevos no afectan lo existente.
+
+Q: ¿Puedo ejecutar manualmente para probar?
+A: Sí, via curl:
+   curl -X POST https://tu-api-render.onrender.com/api/recolectar-navegador
+   Luego espera 5-10 min y verifica logs en Render.
+
+================================================================================
+🎓 RESUMEN TÉCNICO
+================================================================================
+
+Problema:    UANDES + SPA dan 403 o requieren JS renderizado con httpx
+Solución:    Playwright (headless Chrome con JS)
+Ambiente:    Render.com (sandbox local no tiene librerías de sistema)
+Trigger:     cron-job.org envía POST cada lunes 09:00 UTC
+Ejecución:   Background task en FastAPI (no bloquea API)
+Resultado:   JSON → CSV merge (idempotente, evita duplicados)
+Logs:        Render dashboard → "Recent Deploys" o "Logs"
+
+================================================================================
+📞 SOPORTE
+================================================================================
+
+- Archivos: INSTRUCCIONES_RENDER.md (detallada) o DEPLOY_CHECKLIST.md (paso a paso)
+- Logs: Render.com → tu servicio → "Logs"
+- Errores: busca "[ERROR]" o "Excepción" en logs
+- Cron: verifica en cron-job.org que la tarea esté activa
+
+================================================================================
+                           FIN DEL RESUMEN
+================================================================================
+
+Próximo paso: PASO 1a arriba (bash SETUP_RENDER.sh)
+
