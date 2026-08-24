@@ -1,7 +1,3 @@
 fastapi
-uvicorn[standard]
+uvicorn
 playwright
-httpx
-aiofiles
-python-dotenv
-click
