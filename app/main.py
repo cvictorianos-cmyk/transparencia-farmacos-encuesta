@@ -1,29 +1,12 @@
-"""Entrypoint de la API FastAPI."""
-import hashlib
-import logging
-import os
-import secrets
-from datetime import datetime, timezone
-from fastapi import FastAPI, Request, BackgroundTasks
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
-from .api import router
-from .database import init_db
+"""Entrypoint minimalista de la API FastAPI."""
 import subprocess
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-)
+from datetime import datetime
+from fastapi import FastAPI, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
     title="API Benchmarking Fármacos Oncológicos",
     version="0.2.0",
-    description=(
-        "Automatiza el benchmarking de precios de fármacos oncológicos en clínicas "
-        "privadas de Chile, partiendo del Registro Sanitario del ISP. Incluye un "
-        "comparador web responsivo con 10 casos precargados."
-    ),
 )
 
 app.add_middleware(
@@ -34,81 +17,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.on_event("startup")
-async def _startup():
-    init_db()
-
-# === Registro de visitas (metricas de trafico para el AFE) ===
-# Guarda cada GET relevante en SQLite (tabla visitas). Consultar en /metricas
-# (protegido con las credenciales de descargas). IP anonimizada via hash.
-_RUTAS_SIN_REGISTRO = ("/health", "/metricas", "/favicon", "/docs", "/openapi", "/redoc")
-
-@app.middleware("http")
-async def registrar_visitas(request: Request, call_next):
-    response = await call_next(request)
-    try:
-        ruta = request.url.path
-        if request.method == "GET" and not ruta.startswith(_RUTAS_SIN_REGISTRO):
-            from . import database as db
-            ip = request.client.host if request.client else None
-            db.registrar_visita({
-                "fecha": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                "ruta": ruta,
-                "status": response.status_code,
-                "user_agent": (request.headers.get("user-agent") or "")[:200],
-                "referer": (request.headers.get("referer") or "")[:200],
-                "ip_hash": hashlib.sha256(ip.encode()).hexdigest()[:16] if ip else None,
-            })
-    except Exception:
-        pass  # el registro jamas debe romper una request
-    return response
-
-# === Autenticacion ===
-# El acceso inicial al sitio es publico (el HTTP Basic global fue retirado
-# de forma definitiva para la presentacion del 13-jul-2026).
-#
-# MODO_DEMO controla el login de la version Premium:
-#   - "1" (por defecto): Premium se activa SIN usuario ni contraseña (demo).
-#   - "0": /premium/login vuelve a exigir credenciales (AUTH_USER / AUTH_PASS).
-# Para reactivar el login Premium despues de la defensa: cambiar el valor por
-# defecto a "0" aqui, o definir MODO_DEMO=0 como variable de entorno en Render.
-MODO_DEMO = os.environ.get("MODO_DEMO", "1") != "0"
-
-# Credenciales del login Premium, configurables via variables de entorno en Render.
-AUTH_USER = os.environ.get("AUTH_USER", "carlos")
-AUTH_PASS = os.environ.get("AUTH_PASS", "Transparencia2026")
-
-# Login de la version Premium del comparador.
-@app.post("/premium/login")
-async def premium_login(request: Request):
-    if MODO_DEMO:
-        return {"ok": True, "plan": "premium", "demo": True}
-    try:
-        body = await request.json()
-    except Exception:
-        body = {}
-    user = str(body.get("usuario", ""))
-    pwd = str(body.get("contrasena", ""))
-    if secrets.compare_digest(user, AUTH_USER) and secrets.compare_digest(pwd, AUTH_PASS):
-        return {"ok": True, "plan": "premium"}
-    return Response(status_code=401, content='{"ok": false}', media_type="application/json")
-
-app.include_router(router)
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
 
 @app.get("/info")
 async def info():
-    # Metadatos de la API (JSON). La raiz "/" ahora sirve la portada HTML
-    # (ver ruta inicio_ui en api.py); este endpoint conserva el indice JSON.
     return {
         "name": "API Benchmarking Fármacos Oncológicos",
         "version": "0.2.0",
-        "inicio": "/",
-        "portada": "/comparador",
-        "comparador": "/comparador/app",
-        "catalogo": "/catalogo",
-        "encuesta": "/encuesta",
-        "docs": "/docs",
-        "health": "/health",
     }
 
 @app.post("/api/recolectar-navegador")
@@ -117,35 +34,28 @@ async def recolectar_navegador(background_tasks: BackgroundTasks):
     def run_recolector():
         try:
             print(f"[{datetime.now()}] Iniciando Playwright recolector", flush=True)
-            
-            # Ejecuta el script Playwright
+
             result = subprocess.run(
                 ["python3", "scripts/recolectar_navegador_full.py",
                  "--export-json", "/tmp/navegador_hoy.json"],
-                capture_output=True, 
-                text=True, 
+                capture_output=True,
+                text=True,
                 timeout=600
             )
-            
+
             if result.returncode == 0:
                 print("[OK] Playwright completó, integrando con CSV", flush=True)
-                
-                # Integra con CSV histórico
                 subprocess.run(
                     ["python3", "scripts/integrar_navegador.py",
                      "/tmp/navegador_hoy.json"],
-                    capture_output=True, 
+                    capture_output=True,
                     text=True
                 )
-                print("[OK] Recolección completada exitosamente", flush=True)
+                print("[OK] Recolección completada", flush=True)
             else:
-                print(f"[ERROR Playwright] {result.stderr}", flush=True)
+                print(f"[ERROR] {result.stderr}", flush=True)
         except Exception as e:
-            print(f"[ERROR Exception] {e}", flush=True)
-    
+            print(f"[ERROR] {e}", flush=True)
+
     background_tasks.add_task(run_recolector)
-    return {
-        "status": "recolección iniciada (background)",
-        "endpoint": "/api/recolectar-navegador",
-        "tiempo": datetime.now().isoformat()
-    }
+    return {"status": "recolección iniciada"}
