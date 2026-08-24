@@ -1,7 +1,9 @@
 fastapi
 uvicorn
+starlette
 httpx
 playwright
 python-dotenv
 aiofiles
 click
+requests
