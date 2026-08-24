@@ -4,3 +4,4 @@ httpx
 playwright
 python-dotenv
 aiofiles
+click
