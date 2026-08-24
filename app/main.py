@@ -4,13 +4,12 @@ import logging
 import os
 import secrets
 from datetime import datetime, timezone
-
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
-
 from .api import router
 from .database import init_db
+import subprocess
 
 logging.basicConfig(
     level=logging.INFO,
@@ -35,17 +34,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 @app.on_event("startup")
 async def _startup():
     init_db()
-
 
 # === Registro de visitas (metricas de trafico para el AFE) ===
 # Guarda cada GET relevante en SQLite (tabla visitas). Consultar en /metricas
 # (protegido con las credenciales de descargas). IP anonimizada via hash.
 _RUTAS_SIN_REGISTRO = ("/health", "/metricas", "/favicon", "/docs", "/openapi", "/redoc")
-
 
 @app.middleware("http")
 async def registrar_visitas(request: Request, call_next):
@@ -67,7 +63,6 @@ async def registrar_visitas(request: Request, call_next):
         pass  # el registro jamas debe romper una request
     return response
 
-
 # === Autenticacion ===
 # El acceso inicial al sitio es publico (el HTTP Basic global fue retirado
 # de forma definitiva para la presentacion del 13-jul-2026).
@@ -82,7 +77,6 @@ MODO_DEMO = os.environ.get("MODO_DEMO", "1") != "0"
 # Credenciales del login Premium, configurables via variables de entorno en Render.
 AUTH_USER = os.environ.get("AUTH_USER", "carlos")
 AUTH_PASS = os.environ.get("AUTH_PASS", "Transparencia2026")
-
 
 # Login de la version Premium del comparador.
 @app.post("/premium/login")
@@ -99,9 +93,7 @@ async def premium_login(request: Request):
         return {"ok": True, "plan": "premium"}
     return Response(status_code=401, content='{"ok": false}', media_type="application/json")
 
-
 app.include_router(router)
-
 
 @app.get("/info")
 async def info():
@@ -117,4 +109,43 @@ async def info():
         "encuesta": "/encuesta",
         "docs": "/docs",
         "health": "/health",
+    }
+
+@app.post("/api/recolectar-navegador")
+async def recolectar_navegador(background_tasks: BackgroundTasks):
+    """Dispara recolección con Playwright (UANDES + SPA) en background."""
+    def run_recolector():
+        try:
+            print(f"[{datetime.now()}] Iniciando Playwright recolector", flush=True)
+            
+            # Ejecuta el script Playwright
+            result = subprocess.run(
+                ["python3", "scripts/recolectar_navegador_full.py",
+                 "--export-json", "/tmp/navegador_hoy.json"],
+                capture_output=True, 
+                text=True, 
+                timeout=600
+            )
+            
+            if result.returncode == 0:
+                print("[OK] Playwright completó, integrando con CSV", flush=True)
+                
+                # Integra con CSV histórico
+                subprocess.run(
+                    ["python3", "scripts/integrar_navegador.py",
+                     "/tmp/navegador_hoy.json"],
+                    capture_output=True, 
+                    text=True
+                )
+                print("[OK] Recolección completada exitosamente", flush=True)
+            else:
+                print(f"[ERROR Playwright] {result.stderr}", flush=True)
+        except Exception as e:
+            print(f"[ERROR Exception] {e}", flush=True)
+    
+    background_tasks.add_task(run_recolector)
+    return {
+        "status": "recolección iniciada (background)",
+        "endpoint": "/api/recolectar-navegador",
+        "tiempo": datetime.now().isoformat()
     }
