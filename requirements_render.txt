@@ -4,3 +4,7 @@ uvicorn
 playwright
 click
 httpx
+pandas
+sqlalchemy
+python-multipart
+pydantic-settings
