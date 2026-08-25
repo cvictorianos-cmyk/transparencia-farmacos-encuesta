@@ -3,3 +3,4 @@ starlette
 uvicorn
 playwright
 click
+httpx
